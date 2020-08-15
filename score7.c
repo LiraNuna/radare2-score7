@@ -73,6 +73,13 @@ typedef struct {
     bool half;
 } instruction;
 
+static int32_t sign_extend(uint32_t x, uint8_t b) {
+    uint32_t m = 1UL << (b - 1);
+
+    x = x & ((1UL << b) - 1);
+    return (x ^ m) - m;
+}
+
 static instruction make_insn(const char *name, uint8_t cond, uint8_t t, const char *suf, bool half) {
     instruction op = {
         .name = name,
@@ -165,6 +172,20 @@ static void disasm32(RAsm *rasm, RAsmOp *asm_op, uint32_t insn) {
                 case 0x3D: OP_RRD(IC("roric", cu), rD, rA, rB);
                 case 0x3E: OP_RRD(IC("roli", cu), rD, rA, rB);
                 case 0x3F: OP_RRD(IC("rolic", cu), rD, rA, rB);
+                default: OP(I("invalid"));
+            }
+        }
+        case 0x01: {
+            bool cu = BIT_RANGE(insn, 0, 1);
+            uint16_t imm16 = BIT_RANGE(insn, 1, 16);
+            uint32_t rD = BIT_RANGE(insn, 20, 5);
+
+            switch (BIT_RANGE(insn, 17, 3)) {
+                case 0x00: OP_RD(IC("addi", cu), rD, sign_extend(imm16, 16));
+                case 0x02: OP_RD(IC("cmpi", cu), rD, sign_extend(imm16, 16));
+                case 0x04: OP_RH(IC("andi", cu), rD, imm16);
+                case 0x05: OP_RH(IC("ori", cu), rD, imm16);
+                case 0x06: OP_RH(IC("ldi", cu), rD, imm16);
                 default: OP(I("invalid"));
             }
         }
