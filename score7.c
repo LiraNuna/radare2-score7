@@ -205,6 +205,24 @@ static void disasm32(RAsm *rasm, RAsmOp *asm_op, uint32_t insn) {
                 case 0x07: OP_RMDP(I("sb"), rD, rA, imm12);
             }
         }
+        case 0x04: {
+            int32_t disp = sign_extend(((BIT_RANGE(insn, 15, 10) << 9) | BIT_RANGE(insn, 1, 9)) << 1, 20);
+            OP_W(IBL("b", BIT_RANGE(insn, 10, 5), BIT_RANGE(insn, 0, 1)), (uint32_t) rasm->pc + disp);
+        }
+        case 0x05: {
+            bool cu = BIT_RANGE(insn, 0, 1);
+            uint16_t imm16 = BIT_RANGE(insn, 1, 16);
+            uint32_t rD = BIT_RANGE(insn, 20, 5);
+
+            switch (BIT_RANGE(insn, 17, 3)) {
+                case 0x00: OP_RD(IC("addis", cu), rD, sign_extend(imm16, 16));
+                case 0x02: OP_RD(IC("cmpis", cu), rD, sign_extend(imm16, 16));
+                case 0x04: OP_RH(IC("andis", cu), rD, imm16);
+                case 0x05: OP_RH(IC("oris", cu), rD, imm16);
+                case 0x06: OP_RH(IC("ldis", cu), rD, imm16);
+                default: OP(I("invalid"));
+            }
+        }
     }
 }
 
