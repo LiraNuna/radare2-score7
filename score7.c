@@ -238,6 +238,12 @@ static void disasm32(RAsm *rasm, RAsmOp *asm_op, uint32_t insn) {
                 case 0x07: OP_RMPD(I("sb"), rD, rA, imm12);
             }
         }
+        case 0x08: OP_RRH(IC("addri", BIT_RANGE(insn, 0, 1)), BIT_RANGE(insn, 15, 5), BIT_RANGE(insn, 20, 5),
+                          sign_extend(BIT_RANGE(insn, 1, 14), 14));
+        case 0x0C: OP_RRH(IC("andri", BIT_RANGE(insn, 0, 1)), BIT_RANGE(insn, 15, 5), BIT_RANGE(insn, 20, 5),
+                          sign_extend(BIT_RANGE(insn, 1, 14), 14));
+        case 0x0D: OP_RRH(IC("orri", BIT_RANGE(insn, 0, 1)), BIT_RANGE(insn, 15, 5), BIT_RANGE(insn, 20, 5),
+                          sign_extend(BIT_RANGE(insn, 1, 14), 14));
     }
 }
 
