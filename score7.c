@@ -32,7 +32,7 @@
 #define OP_RH(op, reg1, immx16) FORMAT_OP(op, "%s, 0x%04x", REGISTERS[reg1], immx16)
 #define OP_RRH(op, reg1, reg2, immx16) FORMAT_OP(op, "%s, %s, 0x%04x", REGISTERS[reg1], REGISTERS[reg2], immx16)
 #define OP_RM(op, reg1, mem) FORMAT_OP(op, "%s, [%s]", REGISTERS[reg1], REGISTERS[mem])
-#define OP_RMD(op, reg1, mem, immd) FORMAT_OP("%s, [%s, %d]", REGISTERS[reg1], REGISTERS[mem], immd)
+#define OP_RMD(op, reg1, mem, immd) FORMAT_OP(op, "%s, [%s, %d]", REGISTERS[reg1], REGISTERS[mem], immd)
 #define OP_RMDP(op, reg1, mem, immd) FORMAT_OP(op, "%s, [%s, %d]+", REGISTERS[reg1], REGISTERS[mem], immd)
 #define OP_RMPD(op, reg1, mem, immd) FORMAT_OP(op, "%s, [%s]+, %d", REGISTERS[reg1], REGISTERS[mem], immd)
 #define OP_MP(op, mem) FORMAT_OP(op, "[%s]+", REGISTERS[mem])
@@ -244,6 +244,22 @@ static void disasm32(RAsm *rasm, RAsmOp *asm_op, uint32_t insn) {
                           sign_extend(BIT_RANGE(insn, 1, 14), 14));
         case 0x0D: OP_RRH(IC("orri", BIT_RANGE(insn, 0, 1)), BIT_RANGE(insn, 15, 5), BIT_RANGE(insn, 20, 5),
                           sign_extend(BIT_RANGE(insn, 1, 14), 14));
+        case 0x10: OP_RMD(I("lw"), BIT_RANGE(insn, 20, 5), BIT_RANGE(insn, 15, 5),
+                          sign_extend(BIT_RANGE(insn, 0, 15), 15));
+        case 0x11: OP_RMD(I("lh"), BIT_RANGE(insn, 20, 5), BIT_RANGE(insn, 15, 5),
+                          sign_extend(BIT_RANGE(insn, 0, 15), 15));
+        case 0x12: OP_RMD(I("lhu"), BIT_RANGE(insn, 20, 5), BIT_RANGE(insn, 15, 5),
+                          sign_extend(BIT_RANGE(insn, 0, 15), 15));
+        case 0x13: OP_RMD(I("lb"), BIT_RANGE(insn, 20, 5), BIT_RANGE(insn, 15, 5),
+                          sign_extend(BIT_RANGE(insn, 0, 15), 15));
+        case 0x14: OP_RMD(I("sw"), BIT_RANGE(insn, 20, 5), BIT_RANGE(insn, 15, 5),
+                          sign_extend(BIT_RANGE(insn, 0, 15), 15));
+        case 0x15: OP_RMD(I("sh"), BIT_RANGE(insn, 20, 5), BIT_RANGE(insn, 15, 5),
+                          sign_extend(BIT_RANGE(insn, 0, 15), 15));
+        case 0x16: OP_RMD(I("lbu"), BIT_RANGE(insn, 20, 5), BIT_RANGE(insn, 15, 5),
+                          sign_extend(BIT_RANGE(insn, 0, 15), 15));
+        case 0x17: OP_RMD(I("sb"), BIT_RANGE(insn, 20, 5), BIT_RANGE(insn, 15, 5),
+                          sign_extend(BIT_RANGE(insn, 0, 15), 15));
     }
 }
 
