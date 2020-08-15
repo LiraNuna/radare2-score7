@@ -33,7 +33,7 @@
 #define OP_RRH(op, reg1, reg2, immx16) FORMAT_OP(op, "%s, %s, 0x%04x", REGISTERS[reg1], REGISTERS[reg2], immx16)
 #define OP_RM(op, reg1, mem) FORMAT_OP(op, "%s, [%s]", REGISTERS[reg1], REGISTERS[mem])
 #define OP_RMD(op, reg1, mem, immd) FORMAT_OP("%s, [%s, %d]", REGISTERS[reg1], REGISTERS[mem], immd)
-#define OP_RMDP(op, reg1, mem, immd) FORMAT_OP("%s, [%s, %d]+", REGISTERS[reg1], REGISTERS[mem], immd)
+#define OP_RMDP(op, reg1, mem, immd) FORMAT_OP(op, "%s, [%s, %d]+", REGISTERS[reg1], REGISTERS[mem], immd)
 #define OP_RMPD(op, reg1, mem, immd) FORMAT_OP("%s, [%s]+, %d", REGISTERS[reg1], REGISTERS[mem], immd)
 #define OP_MP(op, mem) FORMAT_OP(op, "[%s]+", REGISTERS[mem])
 #define OP_RMP(op, reg1, mem) FORMAT_OP(op, "%s, [%s]+",  REGISTERS[reg1], REGISTERS[mem])
@@ -190,6 +190,21 @@ static void disasm32(RAsm *rasm, RAsmOp *asm_op, uint32_t insn) {
             }
         }
         case 0x02: OP_W(IL("j", BIT_RANGE(insn, 0, 1)), (uint32_t)(rasm->pc & 0xFC000000) | (BIT_RANGE(insn, 1, 24) << 1));
+        case 0x03: {
+            uint32_t rA = BIT_RANGE(insn, 15, 5);
+            uint32_t rD = BIT_RANGE(insn, 20, 5);
+            int16_t imm12 = sign_extend(BIT_RANGE(insn, 3, 12), 12);
+            switch(BIT_RANGE(insn, 0, 3)) {
+                case 0x00: OP_RMDP(I("lw"), rD, rA, imm12);
+                case 0x01: OP_RMDP(I("lh"), rD, rA, imm12);
+                case 0x02: OP_RMDP(I("lhu"), rD, rA, imm12);
+                case 0x03: OP_RMDP(I("lb"), rD, rA, imm12);
+                case 0x04: OP_RMDP(I("sw"), rD, rA, imm12);
+                case 0x05: OP_RMDP(I("sh"), rD, rA, imm12);
+                case 0x06: OP_RMDP(I("lbu"), rD, rA, imm12);
+                case 0x07: OP_RMDP(I("sb"), rD, rA, imm12);
+            }
+        }
     }
 }
 
