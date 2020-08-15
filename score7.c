@@ -10,7 +10,7 @@
 #define IB(name, cond) make_insn(name, cond, 3, "", false)
 #define IBL(name, cond, link) make_insn(name, cond, 3, link ? "l" : "", false)
 #define IS(name, suffix) make_insn(name, 15, 3, suffix, false)
-#define IL(name, suffix) IS(name, "l")
+#define IL(name, link) IS(name, link ? "l" : "")
 #define IC(name, c) IS(name, c ? ".c" : "")
 #define ITC(name, t, c) make_insn(name, 15, t, c ? ".c" : "", false)
 
@@ -189,6 +189,7 @@ static void disasm32(RAsm *rasm, RAsmOp *asm_op, uint32_t insn) {
                 default: OP(I("invalid"));
             }
         }
+        case 0x02: OP_W(IL("j", BIT_RANGE(insn, 0, 1)), (uint32_t)(rasm->pc & 0xFC000000) | (BIT_RANGE(insn, 1, 24) << 1));
     }
 }
 
