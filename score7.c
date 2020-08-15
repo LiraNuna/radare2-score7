@@ -260,6 +260,7 @@ static void disasm32(RAsm *rasm, RAsmOp *asm_op, uint32_t insn) {
                           sign_extend(BIT_RANGE(insn, 0, 15), 15));
         case 0x17: OP_RMD(I("sb"), BIT_RANGE(insn, 20, 5), BIT_RANGE(insn, 15, 5),
                           sign_extend(BIT_RANGE(insn, 0, 15), 15));
+        default: OP(I("invalid"));
     }
 }
 
