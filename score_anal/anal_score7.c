@@ -1,4 +1,4 @@
-/* radare - LGPL - Copyright 2015 - condret */
+/* radare - LGPL - Copyright 2020 - LiraNuna */
 #include <stdint.h>
 #include <string.h>
 #include <r_types.h>
