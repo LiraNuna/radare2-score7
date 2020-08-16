@@ -33,7 +33,6 @@
 #define OP_RD(op, reg1, immd) FORMAT_OP(op, "%s, %d", REGISTERS[reg1], immd)
 #define OP_RRD(op, reg1, reg2, immd) FORMAT_OP(op, "%s, %s, %d", REGISTERS[reg1], REGISTERS[reg2], immd)
 #define OP_W(op, immx32) FORMAT_OP(op, "0x%08x", immx32)
-#define OP_RW(op, reg1, immx32) FORMAT_OP(op, "%s, 0x%08x", REGISTERS[reg1], immx32)
 #define OP_RH(op, reg1, immx16) FORMAT_OP(op, "%s, 0x%04x", REGISTERS[reg1], immx16)
 #define OP_RRH(op, reg1, reg2, immx16) FORMAT_OP(op, "%s, %s, 0x%04x", REGISTERS[reg1], REGISTERS[reg2], immx16)
 #define OP_RM(op, reg1, mem) FORMAT_OP(op, "%s, [%s]", REGISTERS[reg1], REGISTERS[mem])
