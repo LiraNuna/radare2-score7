@@ -16,6 +16,7 @@
 
 // --- 16bit INSTRUCTIONS ---
 #define I16(name) make_insn(name, 15, 3, "!")
+#define IL16(name, link) make_insn(name, 15, 3, link ? "l!" : "!")
 #define IBL16(name, cond, link) make_insn(name, cond, 3, link ? "l!" : "!")
 
 // --- OPCODES ---
@@ -324,6 +325,10 @@ static void disasm16(RAsm *rasm, RAsmOp *asm_op, uint16_t insn) {
                 case 0xF: OP_RM(I16("sb"), rD, rA);
             }
         }
+        case 0x3: OP_W(IL16("j", BIT_RANGE(insn, 0, 1)),
+                       (uint32_t)(rasm->pc & 0xFFFFF000) | (BIT_RANGE(insn, 1, 11) << 1));
+        case 0x4: OP_W(IBL16("b", BIT_RANGE(insn, 8, 4), false),
+                       (uint32_t)rasm->pc + (sign_extend(BIT_RANGE(insn, 0, 8), 8) << 1));
     }
 }
 
