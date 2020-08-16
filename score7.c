@@ -5,17 +5,21 @@
 #define R_ASM_BUFSIZE 32
 #define BIT_RANGE(x, start, size) ((x >> start) & ((1 << size) - 1))
 
-// --- INSTRUCTIONS ---
-#define I(name) make_insn(name, 15, 3, "", false)
-#define IB(name, cond) make_insn(name, cond, 3, "", false)
-#define IBL(name, cond, link) make_insn(name, cond, 3, link ? "l" : "", false)
-#define IS(name, suffix) make_insn(name, 15, 3, suffix, false)
+// --- 32bit INSTRUCTIONS ---
+#define I(name) make_insn(name, 15, 3, "")
+#define IB(name, cond) make_insn(name, cond, 3, "")
+#define IBL(name, cond, link) make_insn(name, cond, 3, link ? "l" : "")
+#define IS(name, suffix) make_insn(name, 15, 3, suffix)
 #define IL(name, link) IS(name, link ? "l" : "")
 #define IC(name, c) IS(name, c ? ".c" : "")
-#define ITC(name, t, c) make_insn(name, 15, t, c ? ".c" : "", false)
+#define ITC(name, t, c) make_insn(name, 15, t, c ? ".c" : "")
+
+// --- 16bit INSTRUCTIONS ---
+#define I16(name) make_insn(name, 15, 3, "!")
+#define IBL16(name, cond, link) make_insn(name, cond, 3, link ? "l!" : "!")
 
 // --- OPCODES ---
-#define OP_FMT_STR(op, fmt) "%s%s%s%s%s" fmt, op.name, CONDITIONALS[op.cond], TCS[op.t], op.suf, op.half ? "!" : ""
+#define OP_FMT_STR(op, fmt) "%s%s%s%s" fmt, op.name, CONDITIONALS[op.cond], TCS[op.t], op.suf
 #define OP(op) snprintf(asm_op->buf_asm.buf, R_ASM_BUFSIZE, OP_FMT_STR(op, "")); return
 #define FORMAT_OP(op, fmt, args...) snprintf(asm_op->buf_asm.buf, R_ASM_BUFSIZE, OP_FMT_STR(op, " " fmt), args); return
 
@@ -70,7 +74,6 @@ typedef struct {
     uint8_t cond;
     uint8_t t;
     const char *suf;
-    bool half;
 } instruction;
 
 static int32_t sign_extend(uint32_t x, uint8_t b) {
@@ -80,13 +83,12 @@ static int32_t sign_extend(uint32_t x, uint8_t b) {
     return (x ^ m) - m;
 }
 
-static instruction make_insn(const char *name, uint8_t cond, uint8_t t, const char *suf, bool half) {
+static instruction make_insn(const char *name, uint8_t cond, uint8_t t, const char *suf) {
     instruction op = {
         .name = name,
         .cond = cond,
         .t = t,
         .suf = suf,
-        .half = half,
     };
 
     return op;
@@ -264,6 +266,67 @@ static void disasm32(RAsm *rasm, RAsmOp *asm_op, uint32_t insn) {
     }
 }
 
+static void disasm16(RAsm *rasm, RAsmOp *asm_op, uint16_t insn) {
+    switch(BIT_RANGE(insn, 12, 3)) {
+        case 0x0: {
+            uint32_t rA = BIT_RANGE(insn, 4, 4);
+            uint32_t rD = BIT_RANGE(insn, 8, 4);
+            switch (BIT_RANGE(insn, 0, 4)) {
+                case 0x0: OP(I16("nop"));
+                case 0x1: OP_RR(I16("mlfh"), rD, rA + 16);
+                case 0x2: OP_RR(I16("mhfl"), rD + 16, rA);
+                case 0x3: OP_RR(I16("mv"), rD, rA);
+                case 0x4: OP_R(IBL16("br", rD, false), rA);
+                case 0x5: OP_R(IBL16("t", rD, false), rA);
+                case 0xC: OP_R(IBL16("br", rD, true), rA);
+                default: OP(I("invalid"));
+            }
+        }
+        case 0x1: {
+            uint32_t rA = BIT_RANGE(insn, 4, 4);
+            switch(BIT_RANGE(insn, 0, 4)) {
+                case 0x0:
+                    switch(BIT_RANGE(insn, 8, 4)) {
+                        case 0x0: OP_R(I16("mtcel"), rA);
+                        case 0x1: OP_R(I16("mtceh"), rA);
+                        default: OP(I("invalid"));
+                    }
+                case 0x1:
+                    switch(BIT_RANGE(insn, 8, 4)) {
+                        case 0x0: OP_R(I16("mfcel"), rA);
+                        case 0x1: OP_R(I16("mfceh"), rA);
+                        default: OP(I("invalid"));
+                    }
+                default: OP(I("invalid"));
+            }
+        }
+        case 0x2: {
+            uint32_t rA = BIT_RANGE(insn, 4, 4);
+            uint32_t rD = BIT_RANGE(insn, 8, 4);
+            uint32_t rAh = BIT_RANGE(insn, 4, 3);
+            uint32_t rH = BIT_RANGE(insn, 7, 1) << 4;
+            switch (BIT_RANGE(insn, 0, 4)) {
+                case 0x0: OP_RR(I16("add"), rD, rA);
+                case 0x1: OP_RR(I16("sub"), rD, rA);
+                case 0x2: OP_RR(I16("neg"), rD, rA);
+                case 0x3: OP_RR(I16("cmp"), rD, rA);
+                case 0x4: OP_RR(I16("and"), rD, rA);
+                case 0x5: OP_RR(I16("or"), rD, rA);
+                case 0x6: OP_RR(I16("not"), rD, rA);
+                case 0x7: OP_RR(I16("xor"), rD, rA);
+                case 0x8: OP_RM(I16("lw"), rD, rA);
+                case 0x9: OP_RM(I16("lh"), rD, rA);
+                case 0xA: OP_RM(I16("pop"), rD + rH, rAh);
+                case 0xB: OP_RM(I16("lbu"), rD, rA);
+                case 0xC: OP_RM(I16("sw"), rD, rA);
+                case 0xD: OP_RM(I16("sh"), rD, rA);
+                case 0xE: OP_RM(I16("push"), rD + rH, rAh);
+                case 0xF: OP_RM(I16("sb"), rD, rA);
+            }
+        }
+    }
+}
+
 static int disassemble(RAsm *rasm, RAsmOp *asm_op, const uint8_t *buffer, int length) {
     snprintf(asm_op->buf_asm.buf, R_ASM_BUFSIZE, " ");
 
@@ -285,6 +348,7 @@ static int disassemble(RAsm *rasm, RAsmOp *asm_op, const uint8_t *buffer, int le
         disasm32(rasm, asm_op, instruction);
         return asm_op->size = 4;
     } else {
+        disasm16(rasm, asm_op, instruction);
         return asm_op->size = 2;
     }
 }
