@@ -59,38 +59,27 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
             switch (BIT_RANGE(insn, 0, 4)) {
                 case 0x0:
                     switch (BIT_RANGE(insn, 8, 4)) {
-                        case 0x0: {// OP_R(I16("mtcel"), rA);
+                        case 0x0: // mtcel! rA
+                        case 0x1: // mtceh! rA
                             aop->type = R_ANAL_OP_TYPE_MOV;
                             return;
-                        }
-                        case 0x1: { //OP_R(I16("mtceh"), rA);
-                            aop->type = R_ANAL_OP_TYPE_MOV;
-                            return;
-                        }
-                        default: { //OP(I("invalid"));
+                        default:
                             aop->type = R_ANAL_OP_TYPE_UNK;
                             return;
-                        }
                     }
                 case 0x1:
                     switch (BIT_RANGE(insn, 8, 4)) {
-                        case 0x0: { //OP_R(I16("mfcel"), rA);
+                        case 0x0: // mfcel! rA
+                        case 0x1: // mfceh! rA
                             aop->type = R_ANAL_OP_TYPE_MOV;
                             return;
-                        }
-                        case 0x1: { //OP_R(I16("mfceh"), rA);
-                            aop->type = R_ANAL_OP_TYPE_MOV;
-                            return;
-                        }
-                        default: { //OP(I("invalid"));
+                        default:
                             aop->type = R_ANAL_OP_TYPE_UNK;
                             return;
-                        }
                     }
-                default: { //OP(I("invalid"));
+                default:
                     aop->type = R_ANAL_OP_TYPE_UNK;
                     return;
-                }
             }
         }
         case 0x2: {
@@ -99,70 +88,44 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
             uint32_t rAh = BIT_RANGE(insn, 4, 3);
             uint32_t rH = BIT_RANGE(insn, 7, 1) << 4;
             switch (BIT_RANGE(insn, 0, 4)) {
-                case 0x0: { // OP_RR(I16("add"), rD, rA);
+                case 0x0: // add! rD, rA
                     aop->type = R_ANAL_OP_TYPE_ADD;
                     return;
-                }
-                case 0x1: { // OP_RR(I16("sub"), rD, rA);
+                case 0x1: // sub rD, rA
+                case 0x2: // neg! rD, rA
                     aop->type = R_ANAL_OP_TYPE_SUB;
                     return;
-                }
-                case 0x2: { // OP_RR(I16("neg"), rD, rA);
-                    aop->type = R_ANAL_OP_TYPE_SUB;
-                    return;
-                }
-                case 0x3: { // OP_RR(I16("cmp"), rD, rA);
+                case 0x3: // cmp! rD, rA;
                     aop->type = R_ANAL_OP_TYPE_CMP;
                     return;
-                }
-                case 0x4: { // OP_RR(I16("and"), rD, rA);
+                case 0x4: // and! rD, rA
                     aop->type = R_ANAL_OP_TYPE_AND;
                     return;
-                }
-                case 0x5: { // OP_RR(I16("or"), rD, rA);
+                case 0x5: // or! rD, rA
                     aop->type = R_ANAL_OP_TYPE_OR;
                     return;
-                }
-                case 0x6: { // OP_RR(I16("not"), rD, rA);
+                case 0x6: // not! rD, rA
                     aop->type = R_ANAL_OP_TYPE_NOT;
                     return;
-                }
-                case 0x7: { // OP_RR(I16("xor"), rD, rA);
+                case 0x7: // xor! rD, rA
                     aop->type = R_ANAL_OP_TYPE_XOR;
                     return;
-                }
-                case 0x8: { // OP_RM(I16("lw"), rD, rA);
+                case 0x8: // lw! rD, [rA]
+                case 0x9: // lh! rD, [rA]
+                case 0xB: // lbu! rD, [rA]
                     aop->type = R_ANAL_OP_TYPE_LOAD;
                     return;
-                }
-                case 0x9: { // OP_RM(I16("lh"), rD, rA);
-                    aop->type = R_ANAL_OP_TYPE_LOAD;
-                    return;
-                }
-                case 0xA: { // OP_RM(I16("pop"), rD + rH, rAh);
+                case 0xA: // pop!, rD + rH, [rAh]
                     aop->type = R_ANAL_OP_TYPE_POP;
                     return;
-                }
-                case 0xB: { // OP_RM(I16("lbu"), rD, rA);
-                    aop->type = R_ANAL_OP_TYPE_LOAD;
-                    return;
-                }
-                case 0xC: { // OP_RM(I16("sw"), rD, rA);
+                case 0xC: // sw! rD, [rA]
+                case 0xD: // sh! rD, [rA]
+                case 0xF: // sb! rD, [rA]
                     aop->type = R_ANAL_OP_TYPE_STORE;
                     return;
-                }
-                case 0xD: { // OP_RM(I16("sh"), rD, rA);
-                    aop->type = R_ANAL_OP_TYPE_STORE;
-                    return;
-                }
-                case 0xE: { // OP_RM(I16("push"), rD + rH, rAh);
+                case 0xE: // push!, rD + rH, [rAh]
                     aop->type = R_ANAL_OP_TYPE_PUSH;
                     return;
-                }
-                case 0xF: { // OP_RM(I16("sb"), rD, rA);
-                    aop->type = R_ANAL_OP_TYPE_STORE;
-                    return;
-                }
             }
         }
         case 0x3: { // OP_W(IL16("j", BIT_RANGE(insn, 0, 1)),
