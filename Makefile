@@ -18,8 +18,8 @@ $(LIB): $(OBJS)
 
 install:
 	cp -f $(LIB) $(R2_PLUGIN_PATH)
-	make -C score_anal7 install
+	make -C score7_anal install
 
 uninstall:
 	rm -f $(R2_PLUGIN_PATH)/$(LIB)
-	make -C score_anal7 install
+	make -C score7_anal install
