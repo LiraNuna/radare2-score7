@@ -114,13 +114,7 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                     aop->eob = true;
                     aop->reg = REGISTERS[rA];
                     aop->cond = CONDITIONALS[rD];
-
-                    if (rA == 3) { // r3 is a return
-                        aop->type = R_ANAL_OP_TYPE_RET;
-                    } else {
-                        aop->type = R_ANAL_OP_TYPE_RJMP;
-                    }
-
+                    aop->type = (rA == 3) ? R_ANAL_OP_TYPE_RET : R_ANAL_OP_TYPE_RJMP;
                     aop->type |= (aop->cond != R_ANAL_COND_AL) * R_ANAL_OP_TYPE_COND;
                     return;
                 case 0x5: // t{cond}!
