@@ -88,7 +88,6 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
             return;
         case 0x04: //b{cond}[l] imm20
             aop->eob = true;
-            aop->fail = addr + 4;
             aop->type = BIT_RANGE(insn, 0, 1) ? R_ANAL_OP_TYPE_CALL : R_ANAL_OP_TYPE_JMP;
             aop->cond = CONDITIONALS[BIT_RANGE(insn, 10, 5)];
             aop->type |= (aop->cond != R_ANAL_COND_AL) * R_ANAL_OP_TYPE_COND;
@@ -120,7 +119,6 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                         aop->type = R_ANAL_OP_TYPE_RET;
                     } else {
                         aop->type = R_ANAL_OP_TYPE_RJMP;
-                        aop->fail = addr + 2;
                     }
 
                     aop->type |= (aop->cond != R_ANAL_COND_AL) * R_ANAL_OP_TYPE_COND;
@@ -221,7 +219,6 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
             return;
         case 0x4: // b{cond}! imm8
             aop->eob = true;
-            aop->fail = addr + 2;
             aop->cond = CONDITIONALS[BIT_RANGE(insn, 8, 4)];
             aop->type = R_ANAL_OP_TYPE_JMP;
             aop->type |= (aop->cond != R_ANAL_COND_AL) * R_ANAL_OP_TYPE_COND;
@@ -298,12 +295,15 @@ static int score7_anop(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *buffer, i
         instruction |= *(uint16_t *) (buffer + 2) << 15;
         instruction &= 0x3FFFFFFF;
 
+        op->size = 4;
         anal32(anal, op, addr, instruction);
-        return op->size = 4;
     } else {
+        op->size = 2;
         anal16(anal, op, addr, instruction);
-        return op->size = 2;
     }
+
+    op->fail = addr + op->size;
+    return op->size;
 }
 
 struct r_anal_plugin_t r_anal_plugin_score7 = {
