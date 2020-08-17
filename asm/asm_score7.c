@@ -360,7 +360,7 @@ static void disasm16(RAsm *rasm, RAsmOp *asm_op, uint16_t insn) {
 }
 
 static int score7_disasm(RAsm *rasm, RAsmOp *asm_op, const uint8_t *buffer, int length) {
-    snprintf(asm_op->buf_asm.buf, R_ASM_BUFSIZE, " ");
+    memset(asm_op, 0, sizeof(RAsmOp));
 
     if (length < 2) {
         return 0;

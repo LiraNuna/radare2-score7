@@ -312,10 +312,12 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
 }
 
 static int score7_anop(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *buffer, int length, RAnalOpMask mask) {
-    memset(op, '\0', sizeof(RAnalOp));
+    memset(op, 0, sizeof(RAnalOp));
+
     if (length < 2) {
         return 0;
     }
+
     ut32 instruction = *(ut16 *) buffer;
     if (instruction & 0x8000) {
         if (length < 4) {
