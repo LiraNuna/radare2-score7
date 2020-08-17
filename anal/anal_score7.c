@@ -78,6 +78,17 @@ static bool set_reg_profile(RAnal *anal) {
     return r_reg_set_profile_string(anal->reg, p);
 }
 
+static RAnalValue *r_value_reg(RAnal *anal, uint8_t reg) {
+    RAnalValue *val = r_anal_value_new();
+    val->reg = r_reg_get(anal->reg, REGISTERS[reg], R_REG_TYPE_GPR);
+    return val;
+}
+
+static RAnalValue *r_value_imm(st64 imm) {
+    RAnalValue *val = r_anal_value_new();
+    val->imm = imm;
+    return val;
+}
 
 static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
     switch(BIT_RANGE(insn, 25, 5)) {
@@ -167,58 +178,43 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
             uint32_t rH = BIT_RANGE(insn, 7, 1) << 4;
             switch (BIT_RANGE(insn, 0, 4)) {
                 case 0x0: // add! rD, rA
-                    aop->dst = r_anal_value_new ();
-                    aop->src[0] = r_anal_value_new ();
-                    aop->dst->reg = r_reg_get (anal->reg, REGISTERS[rD], R_REG_TYPE_GPR);
-                    aop->src[0]->reg = r_reg_get (anal->reg, REGISTERS[rA], R_REG_TYPE_GPR);
                     aop->type = R_ANAL_OP_TYPE_ADD;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
                     return;
                 case 0x1: // sub rD, rA
-                    aop->dst = r_anal_value_new ();
-                    aop->src[0] = r_anal_value_new ();
-                    aop->dst->reg = r_reg_get (anal->reg, REGISTERS[rD], R_REG_TYPE_GPR);
-                    aop->src[0]->reg = r_reg_get (anal->reg, REGISTERS[rA], R_REG_TYPE_GPR);
                     aop->type = R_ANAL_OP_TYPE_SUB;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
                     return;
                 case 0x2: // neg! rD, rA
-                    aop->dst = r_anal_value_new ();
-                    aop->src[0] = r_anal_value_new ();
-                    aop->src[1] = r_anal_value_new ();
-                    aop->dst->reg = r_reg_get (anal->reg, REGISTERS[rD], R_REG_TYPE_GPR);
-                    aop->src[0]->imm = 0;
-                    aop->src[1]->reg = r_reg_get (anal->reg, REGISTERS[rA], R_REG_TYPE_GPR);
                     aop->type = R_ANAL_OP_TYPE_SUB;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_imm(0);
+                    aop->src[1] = r_value_reg(anal, rA);
                     return;
                 case 0x3: // cmp! rD, rA;
                     aop->type = R_ANAL_OP_TYPE_CMP;
                     return;
                 case 0x4: // and! rD, rA
-                    aop->dst = r_anal_value_new ();
-                    aop->src[0] = r_anal_value_new ();
-                    aop->dst->reg = r_reg_get (anal->reg, REGISTERS[rD], R_REG_TYPE_GPR);
-                    aop->src[0]->reg = r_reg_get (anal->reg, REGISTERS[rA], R_REG_TYPE_GPR);
                     aop->type = R_ANAL_OP_TYPE_AND;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
                     return;
                 case 0x5: // or! rD, rA
-                    aop->dst = r_anal_value_new ();
-                    aop->src[0] = r_anal_value_new ();
-                    aop->dst->reg = r_reg_get (anal->reg, REGISTERS[rD], R_REG_TYPE_GPR);
-                    aop->src[0]->reg = r_reg_get (anal->reg, REGISTERS[rA], R_REG_TYPE_GPR);
                     aop->type = R_ANAL_OP_TYPE_OR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
                     return;
                 case 0x6: // not! rD, rA
-                    aop->dst = r_anal_value_new ();
-                    aop->src[0] = r_anal_value_new ();
-                    aop->dst->reg = r_reg_get (anal->reg, REGISTERS[rD], R_REG_TYPE_GPR);
-                    aop->src[0]->reg = r_reg_get (anal->reg, REGISTERS[rA], R_REG_TYPE_GPR);
                     aop->type = R_ANAL_OP_TYPE_NOT;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
                     return;
                 case 0x7: // xor! rD, rA
-                    aop->dst = r_anal_value_new ();
-                    aop->src[0] = r_anal_value_new ();
-                    aop->dst->reg = r_reg_get (anal->reg, REGISTERS[rD], R_REG_TYPE_GPR);
-                    aop->src[0]->reg = r_reg_get (anal->reg, REGISTERS[rA], R_REG_TYPE_GPR);
                     aop->type = R_ANAL_OP_TYPE_XOR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
                     return;
                 case 0x8: // lw! rD, [rA]
                 case 0x9: // lh! rD, [rA]
@@ -259,21 +255,36 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
             switch (BIT_RANGE(insn, 0, 3)) {
                 case 0x0: // addei! rD, imm5
                     aop->type = R_ANAL_OP_TYPE_ADD;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(imm5);
                     return;
                 case 0x1: // slli! rD, imm5
                     aop->type = R_ANAL_OP_TYPE_SHL;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(imm5);
                     return;
                 case 0x2: // sdbbp, imm5
-                    aop->type = R_ANAL_OP_TYPE_ILL;
+                    aop->type = R_ANAL_OP_TYPE_TRAP;
                     return;
                 case 0x3: // srli! rD, imm5
                     aop->type = R_ANAL_OP_TYPE_SHR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(imm5);
                     return;
                 case 0x4: // bitclr! rD, imm5);
                     aop->type = R_ANAL_OP_TYPE_AND;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(~(1 << imm5));
                     return;
                 case 0x5: // bitset! rD, imm5);
                     aop->type = R_ANAL_OP_TYPE_OR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(1 << imm5);
                     return;
                 case 0x6: // bittst! rD, imm5);
                     aop->type = R_ANAL_OP_TYPE_CMP;
