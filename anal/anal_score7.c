@@ -90,6 +90,8 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
             aop->eob = true;
             aop->fail = addr + 4;
             aop->type = BIT_RANGE(insn, 0, 1) ? R_ANAL_OP_TYPE_CALL : R_ANAL_OP_TYPE_JMP;
+            aop->cond = CONDITIONALS[BIT_RANGE(insn, 10, 5)];
+            aop->type |= (aop->cond != R_ANAL_COND_AL) * R_ANAL_OP_TYPE_COND;
             aop->jump = addr + sign_extend(((BIT_RANGE(insn, 15, 10) << 9) | BIT_RANGE(insn, 1, 9)) << 1, 20);
             return;
     }
@@ -116,8 +118,9 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                     if (rA == 3) { // r3 is a return
                         aop->type = R_ANAL_OP_TYPE_RET;
                     } else {
-                        aop->type = R_ANAL_OP_TYPE_CJMP;
                         aop->cond = CONDITIONALS[rD];
+                        aop->type = R_ANAL_OP_TYPE_RJMP;
+                        aop->type |= (aop->cond != R_ANAL_COND_AL) * R_ANAL_OP_TYPE_COND;
                         aop->fail = addr + 2;
                     }
                     return;
@@ -127,9 +130,10 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                 case 0xC: // br{cond}l! rA
                     aop->eob = true;
                     aop->reg = REGISTERS[rA];
-                    aop->type = R_ANAL_OP_TYPE_CCALL;
-                    aop->fail = addr + 2;
                     aop->cond = CONDITIONALS[rD];
+                    aop->type = R_ANAL_OP_TYPE_RCALL;
+                    aop->type |= (aop->cond != R_ANAL_COND_AL) * R_ANAL_OP_TYPE_COND;
+                    aop->fail = addr + 2;
                     return;
                 default:
                     aop->type = R_ANAL_OP_TYPE_UNK;
@@ -218,8 +222,9 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
         case 0x4: // b{cond}! imm8
             aop->eob = true;
             aop->fail = addr + 2;
-            aop->type = R_ANAL_OP_TYPE_CJMP;
             aop->cond = CONDITIONALS[BIT_RANGE(insn, 8, 4)];
+            aop->type = R_ANAL_OP_TYPE_JMP;
+            aop->type |= (aop->cond != R_ANAL_COND_AL) * R_ANAL_OP_TYPE_COND;
             aop->jump = addr + (sign_extend(BIT_RANGE(insn, 0, 8), 8) << 1);
             return;
         case 0x5: // ldiu!, rD, imm8
