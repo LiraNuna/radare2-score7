@@ -7,19 +7,19 @@ SO_EXT=$(shell uname | grep -q Darwin && echo dylib || echo so)
 LIB=$(NAME).$(SO_EXT)
 
 all: $(LIB)
-	make -C score_anal
+	make -C score7_anal
 
 clean:
 	rm -f $(LIB) $(OBJS)
-	make -C score_anal clean
+	make -C score7_anal clean
 
 $(LIB): $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $(LIB)
 
 install:
 	cp -f $(LIB) $(R2_PLUGIN_PATH)
-	make -C score_anal install
+	make -C score_anal7 install
 
 uninstall:
 	rm -f $(R2_PLUGIN_PATH)/$(LIB)
-	make -C score_anal install
+	make -C score_anal7 install
