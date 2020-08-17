@@ -154,6 +154,10 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
             uint32_t rH = BIT_RANGE(insn, 7, 1) << 4;
             switch (BIT_RANGE(insn, 0, 4)) {
                 case 0x0: // add! rD, rA
+                    aop->dst = r_anal_value_new ();
+                    aop->src[0] = r_anal_value_new ();
+                    aop->dst->reg = r_reg_get (anal->reg, REGISTERS[rD], R_REG_TYPE_GPR);
+                    aop->src[0]->reg = r_reg_get (anal->reg, REGISTERS[rA], R_REG_TYPE_GPR);
                     aop->type = R_ANAL_OP_TYPE_ADD;
                     return;
                 case 0x1: // sub rD, rA
