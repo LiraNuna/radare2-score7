@@ -123,7 +123,7 @@ static void disasm32(RAsm *rasm, RAsmOp *asm_op, uint32_t insn) {
                 case 0x13: OP_RRR(IC("xor", cu), rD, rA, rB);
                 case 0x14: OP_RRD(IC("bitclr", cu), rD, rA, rB);
                 case 0x15: OP_RRD(IC("bitset", cu), rD, rA, rB);
-                case 0x16: OP_RRD(IC("bittst", cu), rD, rA, rB);
+                case 0x16: OP_RD(IC("bittst", cu), rA, rB);
                 case 0x17: OP_RRD(IC("bittgl", cu), rD, rA, rB);
                 case 0x18: OP_RRR(IC("sll", cu), rD, rA, rB);
                 case 0x19: OP(I("invalid"));
