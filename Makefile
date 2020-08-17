@@ -5,12 +5,14 @@ LDFLAGS=-shared $(shell pkg-config --libs r_asm r_anal)
 OBJS=$(NAME).o
 SO_EXT=$(shell uname | grep -q Darwin && echo dylib || echo so)
 
+.PHONY: all
+
 all: asm/asm_$(NAME).$(SO_EXT) anal/anal_$(NAME).$(SO_EXT)
 
-asm/asm_$(NAME).$(SO_EXT):
+asm/asm_$(NAME).$(SO_EXT): asm/asm_$(NAME).c
 	$(CC) $(CFLAGS) $(LDFLAGS) $(R2_CFLAGS) $(R2_LDFLAGS) -o asm/asm_$(NAME).$(SO_EXT) asm/asm_$(NAME).c
 
-anal/anal_$(NAME).$(SO_EXT):
+anal/anal_$(NAME).$(SO_EXT): anal/anal_$(NAME).c
 	$(CC) $(CFLAGS) $(LDFLAGS) $(R2_CFLAGS) $(R2_LDFLAGS) -o anal/anal_$(NAME).$(SO_EXT) anal/anal_$(NAME).c
 
 clean:
