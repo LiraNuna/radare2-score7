@@ -5,7 +5,7 @@ LDFLAGS=-shared $(shell pkg-config --libs r_asm r_anal)
 OBJS=$(NAME).o
 SO_EXT=$(shell uname | grep -q Darwin && echo dylib || echo so)
 
-.PHONY: all
+.PHONY: all clean install uninstall
 
 all: asm/asm_$(NAME).$(SO_EXT) anal/anal_$(NAME).$(SO_EXT)
 
