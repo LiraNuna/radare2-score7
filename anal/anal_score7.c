@@ -192,19 +192,16 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                     return;
             }
         }
-        case 0x3: // j! imm12
-            aop->type = R_ANAL_OP_TYPE_JMP;
-            aop->jump = (addr & 0xFFFFF000) | (BIT_RANGE(insn, 1, 11) << 1);
+        case 0x3: // j{l}! imm12
             aop->eob = true;
+            aop->type = BIT_RANGE(insn, 0, 1) ? R_ANAL_OP_TYPE_CALL : R_ANAL_OP_TYPE_JMP;
+            aop->jump = (addr & 0xFFFFF000) | (BIT_RANGE(insn, 1, 11) << 1);
             return;
         case 0x4: // b{cond}! imm8
-            if (BIT_RANGE(insn, 8, 4) == 15) {
-                aop->type = R_ANAL_OP_TYPE_JMP;
-            } else {
-                aop->type = R_ANAL_OP_TYPE_CJMP;
-                aop->fail = addr + 2;
-            }
-
+            aop->eob = true;
+            aop->fail = addr + 2;
+            aop->type = R_ANAL_OP_TYPE_CJMP;
+            aop->cond = CONDITIONALS[BIT_RANGE(insn, 8, 4)];
             aop->jump = addr + (sign_extend(BIT_RANGE(insn, 0, 8), 8) << 1);
             return;
         case 0x5: // ldiu!, rD, imm8
