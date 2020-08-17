@@ -359,7 +359,7 @@ static void disasm16(RAsm *rasm, RAsmOp *asm_op, uint16_t insn) {
     }
 }
 
-static int disassemble(RAsm *rasm, RAsmOp *asm_op, const uint8_t *buffer, int length) {
+static int score7_disasm(RAsm *rasm, RAsmOp *asm_op, const uint8_t *buffer, int length) {
     snprintf(asm_op->buf_asm.buf, R_ASM_BUFSIZE, " ");
 
     if (length < 2) {
@@ -388,10 +388,10 @@ static int disassemble(RAsm *rasm, RAsmOp *asm_op, const uint8_t *buffer, int le
 RAsmPlugin r_asm_plugin_score7 = {
     .name = "score7",
     .arch = "score7",
+    .desc = "SunPlus S⁺core7 disassembly plugin",
     .license = "LGPL3",
     .bits = 32,
-    .desc = "SunPlus S⁺core7",
-    .disassemble = &disassemble,
+    .disassemble = &score7_disasm,
 };
 
 #ifndef CORELIB

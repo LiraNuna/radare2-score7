@@ -259,40 +259,45 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
     }
 }
 
-static int score7_anop(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *data, int len, RAnalOpMask mask) {
+static int score7_anop(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *buffer, int length, RAnalOpMask mask) {
     memset(op, '\0', sizeof(RAnalOp));
-    if (len < 2) {
+    if (length < 2) {
         return 0;
     }
-    ut32 instruction = *(ut16 *) data;
+    ut32 instruction = *(ut16 *) buffer;
     if (instruction & 0x8000) {
-        if (len < 4) {
+        if (length < 4) {
             return 0;
         }
 
-        op->size = 4;
+        // Remove p0 and p1 bits before handling the instruction as 30bit
+        instruction &= 0x00007FFF;
+        instruction |= *(uint16_t *) (buffer + 2) << 15;
+        instruction &= 0x3FFFFFFF;
+
+//      anal32(anal, op, addr, instruction);
+        return op->size = 4;
     } else {
         anal16(anal, op, addr, instruction);
-        op->size = 2;
+        return op->size = 2;
     }
-    return op->size;
 }
 
 struct r_anal_plugin_t r_anal_plugin_score7 = {
     .name = "score7",
-    .desc = "score7 analysis plugin",
-    .license = "LGPL3",
     .arch = "score7",
+    .desc = "SunPlus S⁺core7 analysis plugin",
+    .license = "LGPL3",
     .bits = 32,
     .init = NULL,
     .fini = NULL,
-    .op = &score7_anop,
-    .set_reg_profile = set_reg_profile,
-    .fingerprint_bb = NULL,
-    .fingerprint_fcn = NULL,
     .diff_bb = NULL,
     .diff_fcn = NULL,
-    .diff_eval = NULL
+    .diff_eval = NULL,
+    .fingerprint_bb = NULL,
+    .fingerprint_fcn = NULL,
+    .op = &score7_anop,
+    .set_reg_profile = &set_reg_profile,
 };
 
 #ifndef R2_PLUGIN_INCORE
