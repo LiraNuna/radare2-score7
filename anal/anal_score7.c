@@ -221,14 +221,14 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
             uint32_t rD = BIT_RANGE(insn, 8, 4);
             uint32_t imm5 = BIT_RANGE(insn, 3, 5);
             switch (BIT_RANGE(insn, 0, 3)) {
-                case 0x0: // lwp!, rD, imm5 << 2);
-                case 0x1: // lhp!, rD, imm5 << 1);
-                case 0x3: // lbup! rD, imm5);
+                case 0x0: // lwp!, rD, imm5 << 2;
+                case 0x1: // lhp!, rD, imm5 << 1;
+                case 0x3: // lbup! rD, imm5;
                     aop->type = R_ANAL_OP_TYPE_LOAD;
                     return;
-                case 0x4: // OP_RD(I16("swp"), rD, imm5 << 2);
-                case 0x5: // OP_RD(I16("shp"), rD, imm5 << 1);
-                case 0x6: // OP_RD(I16("sbp"), rD, imm5);
+                case 0x4: // swp rD, imm5
+                case 0x5: // shp rD, imm5
+                case 0x6: // sbp rD, imm5
                     aop->type = R_ANAL_OP_TYPE_STORE;
                     return;
                 default:
