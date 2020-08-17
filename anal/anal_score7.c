@@ -15,6 +15,46 @@ static int32_t sign_extend(uint32_t x, uint8_t b) {
     return (x ^ m) - m;
 }
 
+static bool set_reg_profile(RAnal *anal) {
+	const char *p = \
+		"=PC    pc\n"
+		"=SP    r0\n"
+		"=LR    r3\n"
+		"=BP    r2\n"
+		"gpr    r0      .32 0   0\n"
+		"gpr    r1      .32 4   0\n"
+		"gpr    r2      .32 8   0\n"
+		"gpr    r3      .32 12  0\n"
+		"gpr    r4      .32 16  0\n"
+		"gpr    r5      .32 20  0\n"
+		"gpr    r6      .32 24  0\n"
+		"gpr    r7      .32 28  0\n"
+		"gpr    r8      .32 32  0\n"
+		"gpr    r9      .32 36  0\n"
+		"gpr    r10     .32 40  0\n"
+		"gpr    r11     .32 44  0\n"
+		"gpr    r12     .32 48  0\n"
+		"gpr    r13     .32 52  0\n"
+		"gpr    r14     .32 56  0\n"
+		"gpr    r15     .32 60  0\n"
+		"gpr    r16     .32 64  0\n"
+		"gpr    r17     .32 68  0\n"
+		"gpr    r18     .32 72  0\n"
+		"gpr    r19     .32 76  0\n"
+		"gpr    r20     .32 80  0\n"
+		"gpr    r21     .32 84  0\n"
+		"gpr    r22     .32 88  0\n"
+		"gpr    r23     .32 92  0\n"
+		"gpr    r24     .32 96  0\n"
+		"gpr    r25     .32 100 0\n"
+		"gpr    r27     .32 104 0\n"
+		"gpr    r28     .32 108 0\n"
+		"gpr    r29     .32 112 0\n"
+		"gpr    r30     .32 116 0\n"
+		"gpr    r31     .32 120 0\n";
+	return r_reg_set_profile_string (anal->reg, p);
+}
+
 static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
     switch (BIT_RANGE(insn, 12, 3)) {
         case 0x0: {
@@ -36,6 +76,7 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                     } else {
                         aop->type = R_ANAL_OP_TYPE_JMP;
                     }
+                    aop->jump = rA;
                     aop->eob = true;
                     return;
                 case 0x5: // t{cond}!
@@ -253,7 +294,7 @@ struct r_anal_plugin_t r_anal_plugin_score7 = {
     .init = NULL,
     .fini = NULL,
     .op = &score7_anop,
-    .set_reg_profile = NULL,
+    .set_reg_profile = set_reg_profile,
     .fingerprint_bb = NULL,
     .fingerprint_fcn = NULL,
     .diff_bb = NULL,
