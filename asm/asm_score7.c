@@ -349,7 +349,7 @@ static void disasm16(RAsm *rasm, RAsmOp *asm_op, uint16_t insn) {
             switch (BIT_RANGE(insn, 0, 3)) {
                 case 0x0: OP_RD(I16("lwp"), rD, imm5 << 2);
                 case 0x1: OP_RD(I16("lhp"), rD, imm5 << 1);
-                case 0x3: OP_D(I16("lbup"), imm5);
+                case 0x3: OP_RD(I16("lbup"), rD, imm5);
                 case 0x4: OP_RD(I16("swp"), rD, imm5 << 2);
                 case 0x5: OP_RD(I16("shp"), rD, imm5 << 1);
                 case 0x6: OP_RD(I16("sbp"), rD, imm5);

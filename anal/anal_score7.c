@@ -169,98 +169,71 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                     return;
             }
         }
-        case 0x3: { // OP_W(IL16("j", BIT_RANGE(insn, 0, 1)),
-            //   (uint32_t)(rasm->pc & 0xFFFFF000) | (BIT_RANGE(insn, 1, 11) << 1));
+        case 0x3: // j! imm12
             aop->type = R_ANAL_OP_TYPE_JMP;
             aop->jump = (addr & 0xFFFFF000) | (BIT_RANGE(insn, 1, 11) << 1);
             aop->eob = true;
             return;
-        }
-        case 0x4: { //OP_W(IBL16("b", BIT_RANGE(insn, 8, 4), false),
-            //  (uint32_t)rasm->pc + (sign_extend(BIT_RANGE(insn, 0, 8), 8) << 1));
+        case 0x4: // b{cond}! imm8
             if (BIT_RANGE(insn, 8, 4) == 15) {
                 aop->type = R_ANAL_OP_TYPE_JMP;
             } else {
                 aop->type = R_ANAL_OP_TYPE_CJMP;
                 aop->fail = addr + 2;
             }
+
             aop->jump = addr + (sign_extend(BIT_RANGE(insn, 0, 8), 8) << 1);
             return;
-        }
-        case 0x5: { //OP_RD(I16("ldiu"), BIT_RANGE(insn, 8, 4), BIT_RANGE(insn, 0, 8));
+        case 0x5: // ldiu!, rD, imm8
             aop->type = R_ANAL_OP_TYPE_LOAD;
             return;
-        }
         case 0x6: {
             uint32_t rD = BIT_RANGE(insn, 8, 4);
             uint32_t imm5 = BIT_RANGE(insn, 3, 5);
             switch (BIT_RANGE(insn, 0, 3)) {
-                case 0x0: { // OP_RD(I16("addei"), rD, sign_extend(imm5, 5));
+                case 0x0: // addei! rD, imm5
                     aop->type = R_ANAL_OP_TYPE_ADD;
                     return;
-                }
-                case 0x1: { // OP_RD(I16("slli"), rD, imm5);
+                case 0x1: // slli! rD, imm5
                     aop->type = R_ANAL_OP_TYPE_SHL;
                     return;
-                }
-                case 0x2: { // OP_D(I16("sdbbp"), imm5);
+                case 0x2: // sdbbp, imm5
                     aop->type = R_ANAL_OP_TYPE_ILL;
                     return;
-                }
-                case 0x3: { // OP_RD(I16("srli"), rD, imm5);
+                case 0x3: // srli! rD, imm5
                     aop->type = R_ANAL_OP_TYPE_SHR;
                     return;
-                }
-                case 0x4: { // OP_RD(I16("bitclr"), rD, imm5);
-                    aop->type = R_ANAL_OP_TYPE_OR;
-                    return;
-                }
-                case 0x5: { // OP_RD(I16("bitset"), rD, imm5);
+                case 0x4: // bitclr! rD, imm5);
                     aop->type = R_ANAL_OP_TYPE_AND;
                     return;
-                }
-                case 0x6: { // OP_RD(I16("bittst"), rD, imm5);
+                case 0x5: // bitset! rD, imm5);
+                    aop->type = R_ANAL_OP_TYPE_OR;
+                    return;
+                case 0x6: // bittst! rD, imm5);
                     aop->type = R_ANAL_OP_TYPE_CMP;
                     return;
-                }
-                case 0x7: { // OP(I("invalid"));
+                case 0x7:
                     aop->type = R_ANAL_OP_TYPE_UNK;
                     return;
-                }
             }
         }
         case 0x7: {
             uint32_t rD = BIT_RANGE(insn, 8, 4);
             uint32_t imm5 = BIT_RANGE(insn, 3, 5);
             switch (BIT_RANGE(insn, 0, 3)) {
-                case 0x0: { // OP_RD(I16("lwp"), rD, imm5 << 2);
+                case 0x0: // lwp!, rD, imm5 << 2);
+                case 0x1: // lhp!, rD, imm5 << 1);
+                case 0x3: // lbup! rD, imm5);
                     aop->type = R_ANAL_OP_TYPE_LOAD;
                     return;
-                }
-                case 0x1: { // OP_RD(I16("lhp"), rD, imm5 << 1);
-                    aop->type = R_ANAL_OP_TYPE_LOAD;
-                    return;
-                }
-                case 0x3: { // OP_D(I16("lbup"), imm5);
-                    aop->type = R_ANAL_OP_TYPE_LOAD;
-                    return;
-                }
-                case 0x4: { // OP_RD(I16("swp"), rD, imm5 << 2);
+                case 0x4: // OP_RD(I16("swp"), rD, imm5 << 2);
+                case 0x5: // OP_RD(I16("shp"), rD, imm5 << 1);
+                case 0x6: // OP_RD(I16("sbp"), rD, imm5);
                     aop->type = R_ANAL_OP_TYPE_STORE;
                     return;
-                }
-                case 0x5: { // OP_RD(I16("shp"), rD, imm5 << 1);
-                    aop->type = R_ANAL_OP_TYPE_STORE;
-                    return;
-                }
-                case 0x6: { // OP_RD(I16("sbp"), rD, imm5);
-                    aop->type = R_ANAL_OP_TYPE_STORE;
-                    return;
-                }
-                default: { // OP(I("invalid"));
+                default:
                     aop->type = R_ANAL_OP_TYPE_UNK;
                     return;
-                }
             }
         }
     }
