@@ -1,5 +1,5 @@
 NAME=score7
-R2_PLUGIN_PATH=$(shell r2 -hh | grep R2_LIBR_PLUGINS | awk '{print $$2}')
+R2_PLUGIN_PATH=$(shell r2 -H R2_USER_PLUGINS)
 CFLAGS=-g -fPIC $(shell pkg-config --cflags r_asm)
 LDFLAGS=-shared $(shell pkg-config --libs r_asm)
 OBJS=$(NAME).o
@@ -17,6 +17,7 @@ $(LIB): $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $(LIB)
 
 install:
+	mkdir -p $(R2_PLUGIN_PATH)
 	cp -f $(LIB) $(R2_PLUGIN_PATH)
 	make -C score7_anal install
 
