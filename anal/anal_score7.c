@@ -21,42 +21,37 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
             uint32_t rA = BIT_RANGE(insn, 4, 4);
             uint32_t rD = BIT_RANGE(insn, 8, 4);
             switch (BIT_RANGE(insn, 0, 4)) {
-                case 0x0: {//OP(I16("nop"));
+                case 0x0: // nop
                     aop->type = R_ANAL_OP_TYPE_NOP;
                     return;
-                }
-                case 0x1: { //OP_RR(I16("mlfh"), rD, rA + 16);
+                case 0x1: // mlfh! rD, rA
+                case 0x2: // mhfl! rD, rA
+                case 0x3: // mv! rD, rA
                     aop->type = R_ANAL_OP_TYPE_MOV;
                     return;
-                }
-                case 0x2: { //OP_RR(I16("mhfl"), rD + 16, rA);
-                    aop->type = R_ANAL_OP_TYPE_MOV;
-                    return;
-                }
-                case 0x3: { //OP_RR(I16("mv"), rD, rA);
-                    aop->type = R_ANAL_OP_TYPE_MOV;
-                    return;
-                }
-                case 0x4: { //OP_R(IBL16("br", rD, false), rA);
-                    aop->type = R_ANAL_OP_TYPE_CJMP;
-                    aop->fail = addr + 2;
+                case 0x4: // br{cond}! rA
+                    if (rD == 15) {
+                        aop->type = R_ANAL_OP_TYPE_CJMP;
+                        aop->fail = addr + 2;
+                    } else {
+                        aop->type = R_ANAL_OP_TYPE_JMP;
+                    }
                     aop->eob = true;
                     return;
-                }
-                case 0x5: { //OP_R(IBL16("t", rD, false), rA);
+                case 0x5: // t{cond}!
                     aop->type = R_ANAL_OP_TYPE_CMP;
                     return;
-                }
-                case 0xC: { //OP_R(IBL16("br", rD, true), rA);
-                    aop->type = R_ANAL_OP_TYPE_CCALL;
-                    aop->fail = addr + 2;
-                    aop->eob = true;
+                case 0xC: // br{cond}l! rA
+                    if (rD == 15) {
+                        aop->type = R_ANAL_OP_TYPE_CALL;
+                        aop->fail = addr + 2;
+                    } else {
+                        aop->type = R_ANAL_OP_TYPE_CCALL;
+                    }
                     return;
-                }
-                default: { // OP(I("invalid"));
+                default:
                     aop->type = R_ANAL_OP_TYPE_UNK;
                     return;
-                }
             }
         }
         case 0x1: {
