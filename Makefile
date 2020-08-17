@@ -1,7 +1,7 @@
 NAME=score7
 R2_PLUGIN_PATH=$(shell r2 -H R2_USER_PLUGINS)
-CFLAGS=-g -fPIC $(shell pkg-config --cflags r_asm)
-LDFLAGS=-shared $(shell pkg-config --libs r_asm)
+CFLAGS=-g -fPIC $(shell pkg-config --cflags r_asm r_anal)
+LDFLAGS=-shared $(shell pkg-config --libs r_asm r_anal)
 OBJS=$(NAME).o
 SO_EXT=$(shell uname | grep -q Darwin && echo dylib || echo so)
 
