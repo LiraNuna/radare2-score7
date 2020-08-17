@@ -78,6 +78,23 @@ static bool set_reg_profile(RAnal *anal) {
     return r_reg_set_profile_string(anal->reg, p);
 }
 
+
+static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
+    switch(BIT_RANGE(insn, 25, 5)) {
+        case 0x02: // j[l] imm24
+            aop->eob = true;
+            aop->type = BIT_RANGE(insn, 0, 1) ? R_ANAL_OP_TYPE_CALL : R_ANAL_OP_TYPE_JMP;
+            aop->jump = (addr & 0xFC000000) | (BIT_RANGE(insn, 1, 24) << 1);
+            return;
+        case 0x04: //b{cond}[l] imm20
+            aop->eob = true;
+            aop->fail = addr + 4;
+            aop->type = BIT_RANGE(insn, 0, 1) ? R_ANAL_OP_TYPE_CALL : R_ANAL_OP_TYPE_JMP;
+            aop->jump = addr + sign_extend(((BIT_RANGE(insn, 15, 10) << 9) | BIT_RANGE(insn, 1, 9)) << 1, 20);
+            return;
+    }
+}
+
 static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
     switch (BIT_RANGE(insn, 12, 3)) {
         case 0x0: {
@@ -154,10 +171,6 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
             uint32_t rH = BIT_RANGE(insn, 7, 1) << 4;
             switch (BIT_RANGE(insn, 0, 4)) {
                 case 0x0: // add! rD, rA
-                    aop->dst = r_anal_value_new ();
-                    aop->src[0] = r_anal_value_new ();
-                    aop->dst->reg = r_reg_get (anal->reg, REGISTERS[rD], R_REG_TYPE_GPR);
-                    aop->src[0]->reg = r_reg_get (anal->reg, REGISTERS[rA], R_REG_TYPE_GPR);
                     aop->type = R_ANAL_OP_TYPE_ADD;
                     return;
                 case 0x1: // sub rD, rA
@@ -280,7 +293,7 @@ static int score7_anop(RAnal *anal, RAnalOp *op, ut64 addr, const ut8 *buffer, i
         instruction |= *(uint16_t *) (buffer + 2) << 15;
         instruction &= 0x3FFFFFFF;
 
-//      anal32(anal, op, addr, instruction);
+        anal32(anal, op, addr, instruction);
         return op->size = 4;
     } else {
         anal16(anal, op, addr, instruction);
