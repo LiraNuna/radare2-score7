@@ -108,10 +108,11 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                     aop->type = R_ANAL_OP_TYPE_CMP;
                     return;
                 case 0xC: // br{cond}l! rA
+                    aop->eob = true;
+                    aop->reg = REGISTERS[rA];
                     aop->type = R_ANAL_OP_TYPE_CCALL;
                     aop->fail = addr + 2;
                     aop->cond = CONDITIONALS[rD];
-                    aop->eob = true;
                     return;
                 default:
                     aop->type = R_ANAL_OP_TYPE_UNK;
