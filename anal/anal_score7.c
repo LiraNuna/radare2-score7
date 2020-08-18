@@ -115,7 +115,203 @@ static RAnalValue *r_value_imm(st64 imm) {
 }
 
 static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
-    switch(BIT_RANGE(insn, 25, 5)) {
+    switch (BIT_RANGE(insn, 25, 5)) {
+        case 0x00: {
+            bool cu = BIT_RANGE(insn, 0, 1);
+            uint32_t rD = BIT_RANGE(insn, 20, 5);
+            uint32_t rA = BIT_RANGE(insn, 15, 5);
+            uint32_t rB = BIT_RANGE(insn, 10, 5);
+            switch (BIT_RANGE(insn, 1, 6)) {
+                case 0x00: // nop
+                    aop->type = R_ANAL_OP_TYPE_NOP;
+                    return;
+                case 0x01: // syscall imm15
+                    aop->type = R_ANAL_OP_TYPE_SWI;
+                    return;
+                case 0x02: // trap
+                    aop->type = R_ANAL_OP_TYPE_TRAP;
+                    aop->cond = CONDITIONALS[rB];
+                    return;
+                case 0x03: // sdbbp rA
+                    aop->type = R_ANAL_OP_TYPE_TRAP;
+                    return;
+                case 0x04: // br{cond}[l] rA
+                    aop->type = cu ? R_ANAL_OP_TYPE_RCALL : (rA == 3) ? R_ANAL_OP_TYPE_RET : R_ANAL_OP_TYPE_RJMP;
+                    aop->eob = true;
+                    aop->reg = REGISTERS[rA];
+                    aop->cond = CONDITIONALS[rD];
+                    return;
+                case 0x08: // add[.c] rD, rA, rB
+                case 0x09: // addc[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_ADD;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x0A: // sub[.c] rD, rA, rB
+                case 0x0B: // subc[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_SUB;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x0C: // cmp.c rA, rB
+                    aop->type = R_ANAL_OP_TYPE_CMP;
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x0D: // cmpz.c rA
+                    aop->type = R_ANAL_OP_TYPE_CMP;
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_imm(0);
+                    return;
+                case 0x0F: // neg[.c] rD, rA
+                    aop->type = R_ANAL_OP_TYPE_SUB;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_imm(0);
+                    aop->src[1] = r_value_reg(anal, rA);
+                    return;
+                case 0x10: // and[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_AND;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x11: // or[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_OR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x12: // not[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_NOT;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    return;
+                case 0x13: // xor[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_XOR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x14: // bitclr[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_AND;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_imm(~(1 << rB));
+                    return;
+                case 0x15: // bitset[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_OR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_imm(1 << rB);
+                    return;
+                case 0x16: // bittst[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_ACMP;
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_imm(1 << rB);
+                    return;
+                case 0x17: // bittgl[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_XOR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_imm(1 << rB);
+                    return;
+                case 0x18: // sll[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_SHL;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x1A: // srl[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_SHR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x1B: // sra[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_SAR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x1C: // ror[.c] rD, rA, rB
+                case 0x1D: // rorc[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_ROR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x1E: // rol[.c] rD, rA, rB
+                case 0x1F: // rolc[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_ROL;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x20: // mul rA, rB
+                case 0x21: // mulu rA, rB
+                    aop->type = R_ANAL_OP_TYPE_MUL;
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x22: // div rA, rB
+                case 0x23: // divu rA, rB
+                    aop->type = R_ANAL_OP_TYPE_DIV;
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x2B: // mv{cond} rA, rB
+                    aop->type = R_ANAL_OP_TYPE_MOV;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->cond = CONDITIONALS[rB];
+                    return;
+                case 0x2C: //extsb[.c]
+                case 0x2D: //extsh[.c]
+                case 0x2E: //extzb[.c]
+                case 0x2F: //extzh[.c]
+                    aop->type = R_ANAL_OP_TYPE_CAST;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_reg(anal, rB);
+                    return;
+                case 0x38: // slli[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_SHL;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_imm(rB);
+                    return;
+                case 0x3A: // srli[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_SHR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_imm(rB);
+                    return;
+                case 0x3B: // srai[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_SAR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_imm(rB);
+                    return;
+                case 0x3C: // rori[.c] rD, rA, rB
+                case 0x3D: // roric[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_ROR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_imm(rB);
+                    return;
+                case 0x3E: // roli[.c] rD, rA, rB
+                case 0x3F: // rolic[.c] rD, rA, rB
+                    aop->type = R_ANAL_OP_TYPE_ROL;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[1] = r_value_imm(rB);
+                    return;
+                default:
+                    return;
+            }
+        }
         case 0x02: // j[l] imm24
             aop->eob = true;
             aop->type = BIT_RANGE(insn, 0, 1) ? R_ANAL_OP_TYPE_CALL : R_ANAL_OP_TYPE_JMP;
