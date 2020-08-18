@@ -399,6 +399,44 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
             aop->cond = CONDITIONALS[BIT_RANGE(insn, 10, 5)];
             aop->jump = addr + sign_extend(((BIT_RANGE(insn, 15, 10) << 9) | BIT_RANGE(insn, 1, 9)) << 1, 20);
             return;
+        case 0x05: {
+            bool cu = BIT_RANGE(insn, 0, 1);
+            uint32_t rD = BIT_RANGE(insn, 20, 5);
+            uint32_t imm16 = BIT_RANGE(insn, 1, 16) << 16;
+
+            switch (BIT_RANGE(insn, 17, 3)) {
+                case 0x00: // andis[.c] rD, imm16
+                    aop->type = R_ANAL_OP_TYPE_ADD;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(imm16);
+                    return;
+                case 0x02: // cmpis[.c] rD, imm16
+                    aop->type = R_ANAL_OP_TYPE_CMP;
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(imm16);
+                    return;
+                case 0x04: // andis[.c] rD, imm16
+                    aop->type = R_ANAL_OP_TYPE_AND;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(imm16);
+                    return;
+                case 0x05: // oris[.c] rD, imm16
+                    aop->type = R_ANAL_OP_TYPE_OR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(imm16);
+                    return;
+                case 0x06: // ldis[.c] rD, imm16
+                    aop->type = R_ANAL_OP_TYPE_MOV;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(imm16);
+                default:
+                    return;
+            }
+        }
         case 0x07: {
             uint32_t rA = BIT_RANGE(insn, 15, 5);
             uint32_t rD = BIT_RANGE(insn, 20, 5);
