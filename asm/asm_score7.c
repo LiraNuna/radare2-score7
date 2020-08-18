@@ -114,8 +114,9 @@ static void disasm32(RAsm *rasm, RAsmOp *asm_op, uint32_t insn) {
                 case 0x08: OP_RRR(IC("add", cu), rD, rA, rB);
                 case 0x09: OP_RRR(IC("addc", cu), rD, rA, rB);
                 case 0x0A: OP_RRR(IC("sub", cu), rD, rA, rB);
+                case 0x0B: OP_RRR(IC("subc", cu), rD, rA, rB);
                 case 0x0C: OP_RR(ITC("cmp", rD, cu), rA, rB);
-                case 0x0D: OP_RR(ITC("cmpz", rD, cu), rA, rB);
+                case 0x0D: OP_R(ITC("cmpz", rD, cu), rA);
                 case 0x0F: OP_RR(IC("neg", cu), rD, rA);
                 case 0x10: OP_RRR(IC("and", cu), rD, rA, rB);
                 case 0x11: OP_RRR(IC("or", cu), rD, rA, rB);
