@@ -120,7 +120,7 @@ static void disasm32(RAsm *rasm, RAsmOp *asm_op, uint32_t insn) {
                 case 0x0F: OP_RR(IC("neg", cu), rD, rA);
                 case 0x10: OP_RRR(IC("and", cu), rD, rA, rB);
                 case 0x11: OP_RRR(IC("or", cu), rD, rA, rB);
-                case 0x12: OP_RRR(IC("not", cu), rD, rA, rB);
+                case 0x12: OP_RR(IC("not", cu), rD, rA);
                 case 0x13: OP_RRR(IC("xor", cu), rD, rA, rB);
                 case 0x14: OP_RRD(IC("bitclr", cu), rD, rA, rB);
                 case 0x15: OP_RRD(IC("bitset", cu), rD, rA, rB);
