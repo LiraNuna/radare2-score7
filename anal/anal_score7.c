@@ -214,12 +214,14 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                 case 0x0: // add! rD, rA
                     aop->type = R_ANAL_OP_TYPE_ADD;
                     aop->dst = r_value_reg(anal, rD);
-                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_reg(anal, rA);
                     return;
                 case 0x1: // sub rD, rA
                     aop->type = R_ANAL_OP_TYPE_SUB;
                     aop->dst = r_value_reg(anal, rD);
-                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_reg(anal, rA);
                     return;
                 case 0x2: // neg! rD, rA
                     aop->type = R_ANAL_OP_TYPE_SUB;
@@ -233,12 +235,14 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                 case 0x4: // and! rD, rA
                     aop->type = R_ANAL_OP_TYPE_AND;
                     aop->dst = r_value_reg(anal, rD);
-                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_reg(anal, rA);
                     return;
                 case 0x5: // or! rD, rA
                     aop->type = R_ANAL_OP_TYPE_OR;
                     aop->dst = r_value_reg(anal, rD);
-                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_reg(anal, rA);
                     return;
                 case 0x6: // not! rD, rA
                     aop->type = R_ANAL_OP_TYPE_NOT;
@@ -248,7 +252,8 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                 case 0x7: // xor! rD, rA
                     aop->type = R_ANAL_OP_TYPE_XOR;
                     aop->dst = r_value_reg(anal, rD);
-                    aop->src[0] = r_value_reg(anal, rA);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_reg(anal, rA);
                     return;
                 case 0x8: // lw! rD, [rA]
                     aop->type = R_ANAL_OP_TYPE_LOAD;
@@ -371,17 +376,17 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_mem8(anal, 3, imm5);
                     return;
-                case 0x4: // swp rD, imm5 << 2
+                case 0x4: // swp! rD, imm5 << 2
                     aop->type = R_ANAL_OP_TYPE_STORE;
                     aop->dst = r_value_mem32(anal, 3, imm5 << 2);
                     aop->src[0] = r_value_reg(anal, rD);
                     return;
-                case 0x5: // shp rD, imm5 << 1
+                case 0x5: // shp! rD, imm5 << 1
                     aop->type = R_ANAL_OP_TYPE_STORE;
                     aop->dst = r_value_mem16(anal, 3, imm5 << 1);
                     aop->src[0] = r_value_reg(anal, rD);
                     return;
-                case 0x6: // sbp rD, imm5
+                case 0x6: // sbp! rD, imm5
                     aop->type = R_ANAL_OP_TYPE_STORE;
                     aop->dst = r_value_mem8(anal, 3, imm5);
                     aop->src[0] = r_value_reg(anal, rD);
