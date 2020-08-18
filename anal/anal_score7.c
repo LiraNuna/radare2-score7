@@ -311,6 +311,44 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     return;
             }
         }
+        case 0x01: {
+            bool cu = BIT_RANGE(insn, 0, 1);
+            uint16_t imm16 = BIT_RANGE(insn, 1, 16);
+            uint32_t rD = BIT_RANGE(insn, 20, 5);
+
+            switch (BIT_RANGE(insn, 17, 3)) {
+                case 0x00: // addi[.c] rD, imm16
+                    aop->type = R_ANAL_OP_TYPE_ADD;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(sign_extend(imm16, 16));
+                    return;
+                case 0x02: // cmpi[.c] rD, imm16
+                    aop->type = R_ANAL_OP_TYPE_CMP;
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(sign_extend(imm16, 16));
+                    return;
+                case 0x04: // andi[.c] rD, imm16
+                    aop->type = R_ANAL_OP_TYPE_AND;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(imm16);
+                    return;
+                case 0x05: // ori[.c] rD, imm16
+                    aop->type = R_ANAL_OP_TYPE_OR;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(imm16);
+                    return;
+                case 0x06: // ldi rD, imm16
+                    aop->type = R_ANAL_OP_TYPE_MOV;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    aop->src[1] = r_value_imm(imm16);
+                    return;
+                default: return;
+            }
+        }
         case 0x02: // j[l] imm24
             aop->eob = true;
             aop->type = BIT_RANGE(insn, 0, 1) ? R_ANAL_OP_TYPE_CALL : R_ANAL_OP_TYPE_JMP;
