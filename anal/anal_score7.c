@@ -511,7 +511,7 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                     aop->type = R_ANAL_OP_TYPE_ADD;
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rD);
-                    aop->src[1] = r_value_imm(imm5);
+                    aop->src[1] = r_value_imm(1 << imm5);
                     return;
                 case 0x1: // slli! rD, imm5
                     aop->type = R_ANAL_OP_TYPE_SHL;
