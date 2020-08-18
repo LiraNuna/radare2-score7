@@ -188,7 +188,7 @@ static void disasm32(RAsm *rasm, RAsmOp *asm_op, uint32_t insn) {
                 case 0x02: OP_RD(IC("cmpi", cu), rD, sign_extend(imm16, 16));
                 case 0x04: OP_RH(IC("andi", cu), rD, imm16);
                 case 0x05: OP_RH(IC("ori", cu), rD, imm16);
-                case 0x06: OP_RD(IC("ldi", cu), rD, imm16);
+                case 0x06: OP_RD(I("ldi"), rD, imm16);
                 default: OP(I("invalid"));
             }
         }
