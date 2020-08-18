@@ -39,7 +39,6 @@ static _RAnalCond CONDITIONALS[] = {
 
 static bool set_reg_profile(RAnal *anal) {
     const char *p = \
-        "=PC    pc\n"
         "=SP    r0\n"
         "=LR    r3\n"
         "=BP    r2\n"
