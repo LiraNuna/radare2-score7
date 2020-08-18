@@ -83,7 +83,7 @@ static RAnalValue *r_value_reg(RAnal *anal, uint8_t reg) {
     return val;
 }
 
-static RAnalValue *r_value_mem8(RAnal *anal, uint8_t reg, uint32_t offset) {
+static RAnalValue *r_value_mem8(RAnal *anal, uint8_t reg, int32_t offset) {
     RAnalValue *val = r_anal_value_new();
     val->reg = r_reg_get(anal->reg, REGISTERS[reg], R_REG_TYPE_GPR);
     val->delta = offset;
@@ -354,11 +354,121 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
             aop->type = BIT_RANGE(insn, 0, 1) ? R_ANAL_OP_TYPE_CALL : R_ANAL_OP_TYPE_JMP;
             aop->jump = (addr & 0xFC000000) | (BIT_RANGE(insn, 1, 24) << 1);
             return;
+        case 0x03: {
+            uint32_t rA = BIT_RANGE(insn, 15, 5);
+            uint32_t rD = BIT_RANGE(insn, 20, 5);
+            int16_t imm12 = sign_extend(BIT_RANGE(insn, 3, 12), 12);
+            switch (BIT_RANGE(insn, 0, 3)) {
+                case 0x00: // lw rD, [rA, imm12]+
+                    aop->type = R_ANAL_OP_TYPE_LOAD;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_mem32(anal, rA, imm12);
+                    return;
+                case 0x01: // lh rD, [rA, imm12]+
+                case 0x02: // lhu rD, [rA, imm12]+
+                    aop->type = R_ANAL_OP_TYPE_LOAD;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_mem16(anal, rA, imm12);
+                    return;
+                case 0x03: // lb rD, [rA, imm12]+
+                case 0x06: // lbu rD, [rA, imm12]+
+                    aop->type = R_ANAL_OP_TYPE_LOAD;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_mem8(anal, rA, imm12);
+                    return;
+                case 0x04: // sw rD, [rA, imm12]+
+                    aop->type = R_ANAL_OP_TYPE_STORE;
+                    aop->dst = r_value_mem32(anal, rA, imm12);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    return;
+                case 0x05: // sh rD, [rA, imm12]+
+                    aop->type = R_ANAL_OP_TYPE_STORE;
+                    aop->dst = r_value_mem16(anal, rA, imm12);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    return;
+                case 0x07: // sb rD, [rA, imm12]+
+                    aop->type = R_ANAL_OP_TYPE_STORE;
+                    aop->dst = r_value_mem8(anal, rA, imm12);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    return;
+            }
+        }
         case 0x04: //b{cond}[l] imm20
             aop->eob = true;
             aop->type = BIT_RANGE(insn, 0, 1) ? R_ANAL_OP_TYPE_CALL : R_ANAL_OP_TYPE_JMP;
             aop->cond = CONDITIONALS[BIT_RANGE(insn, 10, 5)];
             aop->jump = addr + sign_extend(((BIT_RANGE(insn, 15, 10) << 9) | BIT_RANGE(insn, 1, 9)) << 1, 20);
+            return;
+        case 0x07: {
+            uint32_t rA = BIT_RANGE(insn, 15, 5);
+            uint32_t rD = BIT_RANGE(insn, 20, 5);
+            int16_t imm12 = sign_extend(BIT_RANGE(insn, 3, 12), 12);
+            switch (BIT_RANGE(insn, 0, 3)) {
+                case 0x00: // lw rD, [rA]+, imm12
+                    aop->type = R_ANAL_OP_TYPE_LOAD;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_mem32(anal, rA, 0);
+                    return;
+                case 0x01: // lh rD, [rA]+, imm12
+                case 0x02: // lhu rD, [rA]+, imm12
+                    aop->type = R_ANAL_OP_TYPE_LOAD;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_mem16(anal, rA, 0);
+                    return;
+                case 0x03: // lb rD, [rA]+, imm12
+                case 0x06: // lbu rD, [rA]+, imm12
+                    aop->type = R_ANAL_OP_TYPE_LOAD;
+                    aop->dst = r_value_reg(anal, rD);
+                    aop->src[0] = r_value_mem8(anal, rA, 0);
+                    return;
+                case 0x04: // sw rD, [rA]+, imm12
+                    aop->type = R_ANAL_OP_TYPE_STORE;
+                    aop->dst = r_value_mem32(anal, rA, 0);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    return;
+                case 0x05: // sh rD, [rA]+, imm12
+                    aop->type = R_ANAL_OP_TYPE_STORE;
+                    aop->dst = r_value_mem16(anal, rA, 0);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    return;
+                case 0x07: // sb rD, [rA]+, imm12
+                    aop->type = R_ANAL_OP_TYPE_STORE;
+                    aop->dst = r_value_mem8(anal, rA, 0);
+                    aop->src[0] = r_value_reg(anal, rD);
+                    return;
+            }
+        }
+        case 0x10: // lw rD, [rA, imm12]
+            aop->type = R_ANAL_OP_TYPE_LOAD;
+            aop->dst = r_value_reg(anal, BIT_RANGE(insn, 20, 5));
+            aop->src[0] = r_value_mem32(anal, BIT_RANGE(insn, 15, 5), sign_extend(BIT_RANGE(insn, 3, 12), 12));
+            return;
+        case 0x11: // lh rD, [rA, imm12]
+        case 0x12: // lhu rD, [rA, imm12]
+            aop->type = R_ANAL_OP_TYPE_LOAD;
+            aop->dst = r_value_reg(anal, BIT_RANGE(insn, 20, 5));
+            aop->src[0] = r_value_mem16(anal, BIT_RANGE(insn, 15, 5), sign_extend(BIT_RANGE(insn, 3, 12), 12));
+            return;
+        case 0x13: // lb rD, [rA, imm12]
+        case 0x16: // lbu rD, [rA, imm12]
+            aop->type = R_ANAL_OP_TYPE_LOAD;
+            aop->dst = r_value_reg(anal, BIT_RANGE(insn, 20, 5));
+            aop->src[0] = r_value_mem8(anal, BIT_RANGE(insn, 15, 5), sign_extend(BIT_RANGE(insn, 3, 12), 12));
+            return;
+        case 0x14: // sw rD, [rA, imm12]
+            aop->type = R_ANAL_OP_TYPE_STORE;
+            aop->dst = r_value_mem32(anal, BIT_RANGE(insn, 15, 5), sign_extend(BIT_RANGE(insn, 3, 12), 12));
+            aop->src[0] = r_value_reg(anal, BIT_RANGE(insn, 20, 5));
+            return;
+        case 0x15: // sh rD, [rA, imm12]
+            aop->type = R_ANAL_OP_TYPE_STORE;
+            aop->dst = r_value_mem16(anal, BIT_RANGE(insn, 15, 5), sign_extend(BIT_RANGE(insn, 3, 12), 12));
+            aop->src[0] = r_value_reg(anal, BIT_RANGE(insn, 20, 5));
+            return;
+        case 0x17: // sb rD, [rA, imm12]
+            aop->type = R_ANAL_OP_TYPE_STORE;
+            aop->dst = r_value_mem8(anal, BIT_RANGE(insn, 15, 5), sign_extend(BIT_RANGE(insn, 3, 12), 12));
+            aop->src[0] = r_value_reg(anal, BIT_RANGE(insn, 20, 5));
             return;
     }
 }
