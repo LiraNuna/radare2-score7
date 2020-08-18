@@ -438,6 +438,24 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     return;
             }
         }
+        case 0x08: // addri[.c] rD, rA, imm14
+            aop->type = R_ANAL_OP_TYPE_ADD;
+            aop->dst = r_value_reg(anal, BIT_RANGE(insn, 15, 5));
+            aop->src[0] = r_value_reg(anal, BIT_RANGE(insn, 20, 5));
+            aop->src[1] = r_value_imm(sign_extend(BIT_RANGE(insn, 1, 14), 14));
+            return;
+        case 0x0C: // andri[.c] rD, rA, imm14
+            aop->type = R_ANAL_OP_TYPE_AND;
+            aop->dst = r_value_reg(anal, BIT_RANGE(insn, 15, 5));
+            aop->src[0] = r_value_reg(anal, BIT_RANGE(insn, 20, 5));
+            aop->src[1] = r_value_imm(BIT_RANGE(insn, 1, 14));
+            return;
+        case 0x0D: // orri[.c] rD, rA, imm14
+            aop->type = R_ANAL_OP_TYPE_OR;
+            aop->dst = r_value_reg(anal, BIT_RANGE(insn, 15, 5));
+            aop->src[0] = r_value_reg(anal, BIT_RANGE(insn, 20, 5));
+            aop->src[1] = r_value_imm(BIT_RANGE(insn, 1, 14));
+            return;
         case 0x10: // lw rD, [rA, imm12]
             aop->type = R_ANAL_OP_TYPE_LOAD;
             aop->dst = r_value_reg(anal, BIT_RANGE(insn, 20, 5));
