@@ -431,8 +431,7 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                 case 0x06: // ldis[.c] rD, imm16
                     aop->type = R_ANAL_OP_TYPE_MOV;
                     aop->dst = r_value_reg(anal, rD);
-                    aop->src[0] = r_value_reg(anal, rD);
-                    aop->src[1] = r_value_imm(imm16);
+                    aop->src[0] = r_value_imm(imm16);
                 default:
                     return;
             }
