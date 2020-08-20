@@ -7,6 +7,7 @@
 #include <r_anal.h>
 
 #define BIT_RANGE(x, start, size) ((x >> start) & ((1 << size) - 1))
+#define REQ(condition) do { if(!(condition)) { aop->type = R_ANAL_OP_TYPE_ILL; return; } } while(0)
 
 static const char *REGISTERS[] = {
     "r0", "r1", "r2", "r3",
@@ -122,19 +123,24 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
             uint32_t rB = BIT_RANGE(insn, 10, 5);
             switch (BIT_RANGE(insn, 1, 6)) {
                 case 0x00: // nop
+                    REQ(rD == 0 && rA == 0 && rB == 0 && !cu);
                     aop->type = R_ANAL_OP_TYPE_NOP;
                     return;
                 case 0x01: // syscall imm15
+                    REQ(!cu);
                     aop->type = R_ANAL_OP_TYPE_SWI;
                     return;
                 case 0x02: // trap
+                    REQ(!cu && rB < 16);
                     aop->type = R_ANAL_OP_TYPE_TRAP;
                     aop->cond = CONDITIONALS[rB];
                     return;
                 case 0x03: // sdbbp rA
+                    REQ(!cu);
                     aop->type = R_ANAL_OP_TYPE_TRAP;
                     return;
                 case 0x04: // br{cond}[l] rA
+                    REQ(rD < 16);
                     aop->type = cu ? R_ANAL_OP_TYPE_RCALL : (rA == 3) ? R_ANAL_OP_TYPE_RET : R_ANAL_OP_TYPE_RJMP;
                     aop->eob = true;
                     aop->reg = REGISTERS[rA];
@@ -155,11 +161,13 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     aop->src[1] = r_value_reg(anal, rB);
                     return;
                 case 0x0C: // cmp.c rA, rB
+                    REQ(cu);
                     aop->type = R_ANAL_OP_TYPE_CMP;
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_reg(anal, rB);
                     return;
                 case 0x0D: // cmpz.c rA
+                    REQ(cu);
                     aop->type = R_ANAL_OP_TYPE_CMP;
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_imm(0);
@@ -193,24 +201,28 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_reg(anal, rB);
                     return;
-                case 0x14: // bitclr[.c] rD, rA, rB
+                case 0x14: // bitclr.c rD, rA, rB
+                    REQ(cu);
                     aop->type = R_ANAL_OP_TYPE_AND;
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_imm(~(1 << rB));
                     return;
-                case 0x15: // bitset[.c] rD, rA, rB
+                case 0x15: // bitset.c rD, rA, rB
+                    REQ(cu);
                     aop->type = R_ANAL_OP_TYPE_OR;
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_imm(1 << rB);
                     return;
-                case 0x16: // bittst[.c] rD, rA, rB
+                case 0x16: // bittst.c rD, rA, rB
+                    REQ(cu);
                     aop->type = R_ANAL_OP_TYPE_ACMP;
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_imm(1 << rB);
                     return;
-                case 0x17: // bittgl[.c] rD, rA, rB
+                case 0x17: // bittgl.c rD, rA, rB
+                    REQ(cu);
                     aop->type = R_ANAL_OP_TYPE_XOR;
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rA);
@@ -234,33 +246,38 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_reg(anal, rB);
                     return;
+                case 0x1D: // rorc.c rD, rA, rB
+                    REQ(cu);
                 case 0x1C: // ror[.c] rD, rA, rB
-                case 0x1D: // rorc[.c] rD, rA, rB
                     aop->type = R_ANAL_OP_TYPE_ROR;
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_reg(anal, rB);
                     return;
-                case 0x1E: // rol[.c] rD, rA, rB
                 case 0x1F: // rolc[.c] rD, rA, rB
+                    REQ(cu);
+                case 0x1E: // rol[.c] rD, rA, rB
                     aop->type = R_ANAL_OP_TYPE_ROL;
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_reg(anal, rB);
                     return;
-                case 0x20: // mul rA, rB
                 case 0x21: // mulu rA, rB
+                    REQ(!cu);
+                case 0x20: // mul rA, rB
                     aop->type = R_ANAL_OP_TYPE_MUL;
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_reg(anal, rB);
                     return;
                 case 0x22: // div rA, rB
                 case 0x23: // divu rA, rB
+                    REQ(!cu);
                     aop->type = R_ANAL_OP_TYPE_DIV;
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_reg(anal, rB);
                     return;
                 case 0x2B: // mv{cond} rA, rB
+                    REQ(rB < 16);
                     aop->type = R_ANAL_OP_TYPE_MOV;
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rA);
@@ -341,6 +358,7 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     aop->src[1] = r_value_imm(imm16);
                     return;
                 case 0x06: // ldi rD, imm16
+                    REQ(!cu);
                     aop->type = R_ANAL_OP_TYPE_MOV;
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rD);
@@ -396,7 +414,7 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
         case 0x04: //b{cond}[l] imm20
             aop->eob = true;
             aop->type = BIT_RANGE(insn, 0, 1) ? R_ANAL_OP_TYPE_CALL : R_ANAL_OP_TYPE_JMP;
-            aop->cond = CONDITIONALS[BIT_RANGE(insn, 10, 5)];
+            aop->cond = CONDITIONALS[BIT_RANGE(insn, 10, 4)];
             aop->jump = addr + sign_extend(((BIT_RANGE(insn, 15, 10) << 9) | BIT_RANGE(insn, 1, 9)) << 1, 20);
             return;
         case 0x05: {
@@ -428,7 +446,8 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     aop->src[0] = r_value_reg(anal, rD);
                     aop->src[1] = r_value_imm(imm16);
                     return;
-                case 0x06: // ldis[.c] rD, imm16
+                case 0x06: // ldis rD, imm16
+                    REQ(!cu);
                     aop->type = R_ANAL_OP_TYPE_MOV;
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_imm(imm16);
@@ -553,15 +572,18 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                     aop->src[0] = r_value_reg(anal, rA);
                     return;
                 case 0x4: // br{cond}! rA
+                    REQ(rD < 16);
                     aop->eob = true;
                     aop->reg = REGISTERS[rA];
                     aop->cond = CONDITIONALS[rD];
                     aop->type = (rA == 3) ? R_ANAL_OP_TYPE_RET : R_ANAL_OP_TYPE_RJMP;
                     return;
                 case 0x5: // t{cond}!
+                    REQ(rD < 16);
                     aop->type = R_ANAL_OP_TYPE_CMP;
                     return;
                 case 0xC: // br{cond}l! rA
+                    REQ(rD < 16);
                     aop->eob = true;
                     aop->reg = REGISTERS[rA];
                     aop->cond = CONDITIONALS[rD];
