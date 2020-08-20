@@ -782,31 +782,31 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
                 case 0x0: // lwp!, rD, imm5 << 2;
                     aop->type = R_ANAL_OP_TYPE_LOAD;
                     aop->dst = r_value_reg(anal, rD);
-                    aop->src[0] = r_value_mem32(anal, 3, imm5 << 2);
+                    aop->src[0] = r_value_mem32(anal, 2, imm5 << 2);
                     return;
                 case 0x1: // lhp!, rD, imm5 << 1;
                     aop->type = R_ANAL_OP_TYPE_LOAD;
                     aop->dst = r_value_reg(anal, rD);
-                    aop->src[0] = r_value_mem16(anal, 3, imm5 << 1);
+                    aop->src[0] = r_value_mem16(anal, 2, imm5 << 1);
                     return;
                 case 0x3: // lbup! rD, imm5;
                     aop->type = R_ANAL_OP_TYPE_LOAD;
                     aop->dst = r_value_reg(anal, rD);
-                    aop->src[0] = r_value_mem8(anal, 3, imm5);
+                    aop->src[0] = r_value_mem8(anal, 2, imm5);
                     return;
                 case 0x4: // swp! rD, imm5 << 2
                     aop->type = R_ANAL_OP_TYPE_STORE;
-                    aop->dst = r_value_mem32(anal, 3, imm5 << 2);
+                    aop->dst = r_value_mem32(anal, 2, imm5 << 2);
                     aop->src[0] = r_value_reg(anal, rD);
                     return;
                 case 0x5: // shp! rD, imm5 << 1
                     aop->type = R_ANAL_OP_TYPE_STORE;
-                    aop->dst = r_value_mem16(anal, 3, imm5 << 1);
+                    aop->dst = r_value_mem16(anal, 2, imm5 << 1);
                     aop->src[0] = r_value_reg(anal, rD);
                     return;
                 case 0x6: // sbp! rD, imm5
                     aop->type = R_ANAL_OP_TYPE_STORE;
-                    aop->dst = r_value_mem8(anal, 3, imm5);
+                    aop->dst = r_value_mem8(anal, 2, imm5);
                     aop->src[0] = r_value_reg(anal, rD);
                     return;
                 default:
