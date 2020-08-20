@@ -310,15 +310,17 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_imm(rB);
                     return;
+                case 0x3D: // roric.c rD, rA, rB
+                    REQ(cu);
                 case 0x3C: // rori[.c] rD, rA, rB
-                case 0x3D: // roric[.c] rD, rA, rB
                     aop->type = R_ANAL_OP_TYPE_ROR;
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_imm(rB);
                     return;
+                case 0x3F: // rolic.c rD, rA, rB
+                    REQ(cu);
                 case 0x3E: // roli[.c] rD, rA, rB
-                case 0x3F: // rolic[.c] rD, rA, rB
                     aop->type = R_ANAL_OP_TYPE_ROL;
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rA);
