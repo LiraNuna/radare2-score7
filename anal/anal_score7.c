@@ -125,19 +125,23 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                 case 0x00: // nop
                     REQ(rD == 0 && rA == 0 && rB == 0 && !cu);
                     aop->type = R_ANAL_OP_TYPE_NOP;
+                    r_strbuf_setf (aop->esil, "");
                     return;
                 case 0x01: // syscall imm15
                     REQ(!cu);
                     aop->type = R_ANAL_OP_TYPE_SWI;
+                    r_strbuf_setf (aop->esil, "$");
                     return;
                 case 0x02: // trap
                     REQ(!cu && rB < 16);
                     aop->type = R_ANAL_OP_TYPE_TRAP;
                     aop->cond = CONDITIONALS[rB];
+                    r_strbuf_setf (aop->esil, "TRAP");
                     return;
                 case 0x03: // sdbbp rA
                     REQ(!cu);
                     aop->type = R_ANAL_OP_TYPE_TRAP;
+                    r_strbuf_setf (aop->esil, "TRAP");
                     return;
                 case 0x04: // br{cond}[l] rA
                     REQ(rD < 16);
