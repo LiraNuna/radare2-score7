@@ -384,7 +384,11 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
             aop->eob = true;
             aop->type = BIT_RANGE(insn, 0, 1) ? R_ANAL_OP_TYPE_CALL : R_ANAL_OP_TYPE_JMP;
             aop->jump = (addr & 0xFC000000) | (BIT_RANGE(insn, 1, 24) << 1);
-            r_strbuf_setf (&aop->esil, "0x%"PFMT64x",pc,=", aop->jump);
+            if (aop->type == R_ANAL_OP_TYPE_CALL) {
+                r_strbuf_setf (&aop->esil, "pc,r3,=,0x%"PFMT64x",pc,=", aop->jump);
+            } else {
+                r_strbuf_setf (&aop->esil, "0x%"PFMT64x",pc,=", aop->jump);
+            }
             return;
         case 0x03: {
             uint32_t rA = BIT_RANGE(insn, 15, 5);
@@ -731,13 +735,18 @@ static void anal16(RAnal *anal, RAnalOp *aop, uint32_t addr, uint16_t insn) {
             aop->eob = true;
             aop->type = BIT_RANGE(insn, 0, 1) ? R_ANAL_OP_TYPE_CALL : R_ANAL_OP_TYPE_JMP;
             aop->jump = (addr & 0xFFFFF000) | (BIT_RANGE(insn, 1, 11) << 1);
-            r_strbuf_setf (&aop->esil, "0x%"PFMT64x",pc,=", aop->jump);
+            if (aop->type == R_ANAL_OP_TYPE_CALL) {
+                r_strbuf_setf (&aop->esil, "pc,r3,=,0x%"PFMT64x",pc,=", aop->jump);
+            } else {
+                r_strbuf_setf (&aop->esil, "0x%"PFMT64x",pc,=", aop->jump);
+            }
             return;
         case 0x4: // b{cond}! imm8
             aop->eob = true;
             aop->cond = CONDITIONALS[BIT_RANGE(insn, 8, 4)];
             aop->type = R_ANAL_OP_TYPE_JMP;
             aop->jump = addr + (sign_extend(BIT_RANGE(insn, 0, 8), 8) << 1);
+            r_strbuf_setf (&aop->esil, "0x%"PFMT64x",pc,=", aop->jump);
             return;
         case 0x5: // ldiu!, rD, imm8
             aop->type = R_ANAL_OP_TYPE_MOV;
