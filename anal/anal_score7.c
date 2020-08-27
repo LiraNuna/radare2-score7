@@ -1,5 +1,6 @@
 /* radare - LGPL - Copyright 2020 - LiraNuna */
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <r_types.h>
 #include <r_lib.h>
@@ -132,7 +133,7 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                 case 0x01: // syscall imm15
                     REQ(!cu);
                     aop->type = R_ANAL_OP_TYPE_SWI;
-                    r_strbuf_setf (&aop->esil, "$");
+                    r_strbuf_setf (&aop->esil, "%zu,$", rD);
                     return;
                 case 0x02: // trap
                     REQ(!cu && rB < 16);
@@ -148,6 +149,11 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                 case 0x04: // br{cond}[l] rA
                     REQ(rD < 16);
                     aop->type = cu ? R_ANAL_OP_TYPE_RCALL : (rA == 3) ? R_ANAL_OP_TYPE_RET : R_ANAL_OP_TYPE_RJMP;
+                    if (aop->type == R_ANAL_OP_TYPE_RET || aop->type == R_ANAL_OP_TYPE_RJMP) {
+                        // ret/rjmp
+                    } else {
+                        // rcall
+                    }
                     aop->eob = true;
                     aop->reg = REGISTERS[rA];
                     aop->cond = CONDITIONALS[rD];
@@ -158,8 +164,8 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_reg(anal, rB);
-					r_strbuf_setf (&aop->esil, "%s,%s,+,%s,=", aop->src[0]->reg->name,
-							aop->src[1]->reg->name, aop->dst->reg->name);
+                    r_strbuf_setf (&aop->esil, "%s,%s,+,%s,=", aop->src[0]->reg->name,
+                            aop->src[1]->reg->name, aop->dst->reg->name);
                     return;
                 case 0x0A: // sub[.c] rD, rA, rB
                 case 0x0B: // subc[.c] rD, rA, rB
@@ -167,8 +173,8 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_reg(anal, rB);
-					r_strbuf_setf (&aop->esil, "%s,%s,-,%s,=", aop->src[0]->reg->name,
-							aop->src[1]->reg->name, aop->dst->reg->name);
+                    r_strbuf_setf (&aop->esil, "%s,%s,-,%s,=", aop->src[0]->reg->name,
+                            aop->src[1]->reg->name, aop->dst->reg->name);
                     return;
                 case 0x0C: // cmp.c rA, rB
                     REQ(cu);
