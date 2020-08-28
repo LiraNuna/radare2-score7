@@ -76,7 +76,7 @@ static bool set_reg_profile(RAnal *anal) {
         "gpr    r29     .32 112 0\n"
         "gpr    r30     .32 116 0\n"
         "gpr    r31     .32 120 0\n"
-		"gpr    pc      .32 124 0\n";
+        "gpr    pc      .32 124 0\n";
 
     return r_reg_set_profile_string(anal->reg, p);
 }
@@ -164,8 +164,7 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_reg(anal, rB);
-                    r_strbuf_setf (&aop->esil, "%s,%s,+,%s,=", aop->src[0]->reg->name,
-                            aop->src[1]->reg->name, aop->dst->reg->name);
+                    r_strbuf_setf (&aop->esil, "%s,%s,+,%s,=", REGISTERS[rA], REGISTERS[rB], REGISTERS[rD]);
                     return;
                 case 0x0A: // sub[.c] rD, rA, rB
                 case 0x0B: // subc[.c] rD, rA, rB
@@ -173,8 +172,7 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rA);
                     aop->src[1] = r_value_reg(anal, rB);
-                    r_strbuf_setf (&aop->esil, "%s,%s,-,%s,=", aop->src[0]->reg->name,
-                            aop->src[1]->reg->name, aop->dst->reg->name);
+                    r_strbuf_setf (&aop->esil, "%s,%s,-,%s,=", REGISTERS[rA], REGISTERS[rB], REGISTERS[rD]);
                     return;
                 case 0x0C: // cmp.c rA, rB
                     REQ(cu);
@@ -374,7 +372,7 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_reg(anal, rD);
                     aop->src[1] = r_value_imm(imm16);
-                    r_strbuf_setf (&aop->esil, "%zu,%s,|=", imm16, aop->dst->reg->name);
+                    r_strbuf_setf (&aop->esil, "%zu,%s,|=", imm16, REGISTERS[rD]);
                     return;
                 case 0x06: // ldi rD, imm16
                     REQ(!cu);
@@ -475,7 +473,7 @@ static void anal32(RAnal *anal, RAnalOp *aop, uint32_t addr, uint32_t insn) {
                     aop->type = R_ANAL_OP_TYPE_MOV;
                     aop->dst = r_value_reg(anal, rD);
                     aop->src[0] = r_value_imm(imm16);
-                    r_strbuf_setf (&aop->esil, "%zu,%s,=", imm16, aop->dst->reg->name);
+                    r_strbuf_setf (&aop->esil, "%zu,%s,=", imm16, REGISTERS[rD]);
                 default:
                     return;
             }
