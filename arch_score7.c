@@ -117,7 +117,7 @@ static const char *CREGISTERS[] = {
     "cr28", "cr29", "cr30", "cr31",
 };
 
-static const char *CONDITIONALS[] = {
+static const char *CONDITIONALS[256] = {
     "cs", "cc",
     "gtu", "leu",
     "eq", "ne",
@@ -128,7 +128,7 @@ static const char *CONDITIONALS[] = {
     "cnz", "",
 };
 
-static const char *TCS[] = {
+static const char *TCS[256] = {
     "teq", "tmi",
     "", "",
 };
@@ -499,16 +499,9 @@ bool score7_disasm(RAnalOp *op) {
 }
 
 static bool score7_op(RArchSession *as, RAnalOp *op, RArchDecodeMask mask) {
-    bool is_valid = false;
-
     op->type = R_ANAL_OP_TYPE_UNK;
-
-    if (mask & R_ARCH_OP_MASK_DISASM) {
-        op->mnemonic = malloc(32);
-        is_valid = score7_disasm(op);
-    }
-
-    return is_valid;
+    op->mnemonic = malloc(32);
+    return score7_disasm(op);
 }
 
 static int score7_archinfo(RArchSession *a, ut32 q) {
