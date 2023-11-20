@@ -133,6 +133,25 @@ static const char *TCS[] = {
     "", "",
 };
 
+static _RAnalCond R_ANAL_CONDITIONAL_MAPPING[] = {
+    R_ANAL_COND_HS,
+    R_ANAL_COND_LO,
+    R_ANAL_COND_HI,
+    R_ANAL_COND_LS,
+    R_ANAL_COND_EQ,
+    R_ANAL_COND_NE,
+    R_ANAL_COND_GT,
+    R_ANAL_COND_LE,
+    R_ANAL_COND_GE,
+    R_ANAL_COND_LT,
+    R_ANAL_COND_MI,
+    R_ANAL_COND_PL,
+    R_ANAL_COND_VS,
+    R_ANAL_COND_VC,
+    R_ANAL_COND_NE, // XXX: This is CNZ
+    R_ANAL_COND_AL,
+};
+
 typedef struct {
     const char *name;
     uint8_t cond;
@@ -154,6 +173,23 @@ static instruction make_insn(const char *name, uint8_t cond, uint8_t t, const ch
         .t = t,
         .suf = suf,
     };
+}
+
+static bool insn_conditional(RAnalOp *r_op, const char* name, uint8_t cond, bool link, uint32_t target) {
+    r_op->type = R_ANAL_OP_TYPE_JMP;
+    if (link) {
+        r_op->type = R_ANAL_OP_TYPE_CALL;
+    }
+
+    r_op->cond = R_ANAL_CONDITIONAL_MAPPING[cond];
+    if (r_op->cond != R_ANAL_COND_AL) {
+        r_op->type |= R_ANAL_OP_TYPE_COND;
+    }
+
+    r_op->jump = target;
+    r_op->fail = r_op->addr + r_op->size;
+
+    return OP_W(IBL(name, cond, link), target);
 }
 
 static bool disasm32(RAnalOp *r_op, uint32_t insn) {
@@ -252,7 +288,9 @@ static bool disasm32(RAnalOp *r_op, uint32_t insn) {
                 default: OP_INVALID();
             }
         }
-        case 0x02: OP_W(IL("j", BIT_RANGE(insn, 0, 1)), (uint32_t)(r_op->addr & 0xFC000000) | (BIT_RANGE(insn, 1, 24) << 1));
+        case 0x02: {
+            return insn_conditional(r_op, "j", 15, BIT_RANGE(insn, 0, 1), (uint32_t)(r_op->addr & 0xFC000000) | (BIT_RANGE(insn, 1, 24) << 1));
+        }
         case 0x03: {
             uint32_t rA = BIT_RANGE(insn, 15, 5);
             uint32_t rD = BIT_RANGE(insn, 20, 5);
@@ -269,8 +307,12 @@ static bool disasm32(RAnalOp *r_op, uint32_t insn) {
             }
         }
         case 0x04: {
+            uint32_t cond = BIT_RANGE(insn, 10, 5);
+            bool link = BIT_RANGE(insn, 0, 1);
             int32_t disp = sign_extend(((BIT_RANGE(insn, 15, 10) << 9) | BIT_RANGE(insn, 1, 9)) << 1, 20);
-            OP_W(IBL("b", BIT_RANGE(insn, 10, 5), BIT_RANGE(insn, 0, 1)), (uint32_t) r_op->addr + disp);
+            uint32_t target = r_op->addr + disp;
+
+            return insn_conditional(r_op, "b", cond, link, target);
         }
         case 0x05: {
             bool cu = BIT_RANGE(insn, 0, 1);
