@@ -13,7 +13,7 @@ arch_$(NAME).$(SO_EXT): arch_$(NAME).c
 	$(CC) $(CFLAGS) $(LDFLAGS) $(R2_CFLAGS) $(R2_LDFLAGS) -o arch_$(NAME).$(SO_EXT) arch_$(NAME).c
 
 clean:
-	rm -f */*.$(SO_EXT) */*.o
+	rm -f *.$(SO_EXT) *.o
 
 install:
 	mkdir -p $(R2_PLUGIN_PATH)
