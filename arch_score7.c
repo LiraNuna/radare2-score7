@@ -474,7 +474,9 @@ static bool disasm16(RAnalOp *r_op, uint16_t insn) {
     }
 }
 
-bool score7_disasm(RAnalOp *op) {
+static bool score7_op(RArchSession *as, RAnalOp *op, RArchDecodeMask mask) {
+    op->type = R_ANAL_OP_TYPE_UNK;
+    op->mnemonic = malloc(32);
     if (op->size < 2) {
         return false;
     }
@@ -496,12 +498,6 @@ bool score7_disasm(RAnalOp *op) {
         op->size = 2;
         return disasm16(op, instruction);
     }
-}
-
-static bool score7_op(RArchSession *as, RAnalOp *op, RArchDecodeMask mask) {
-    op->type = R_ANAL_OP_TYPE_UNK;
-    op->mnemonic = malloc(32);
-    return score7_disasm(op);
 }
 
 static int score7_archinfo(RArchSession *a, ut32 q) {
