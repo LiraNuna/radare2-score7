@@ -186,6 +186,7 @@ static bool insn_conditional(RAnalOp *r_op, const char* name, uint8_t cond, bool
         r_op->type |= R_ANAL_OP_TYPE_COND;
     }
 
+    r_op->eob = true;
     r_op->jump = target;
     r_op->fail = r_op->addr + r_op->size;
 
@@ -205,7 +206,11 @@ static bool disasm32(RAnalOp *r_op, uint32_t insn) {
                 case 0x01: OP_D(I("syscall"), BIT_RANGE(insn, 10, 15));
                 case 0x02: OP_D(IB("trap", rB), rA);
                 case 0x03: OP_D(I("sdbbp"), rA);
-                case 0x04: OP_R(IBL("br", rB, cu), rA);
+                case 0x04: {
+                    r_op->type = rD == 3 ? R_ANAL_OP_TYPE_RET : R_ANAL_OP_TYPE_RJMP;
+                    OP_R(IBL("br", rB, cu), rA);
+                    r_op->eob = true;
+                }
                 case 0x05: OP(I("pflush"));
                 case 0x06: OP_RM(I("alw"), rD, rA);
                 case 0x07: OP_RM(I("asw"), rD, rA);
@@ -289,6 +294,7 @@ static bool disasm32(RAnalOp *r_op, uint32_t insn) {
             }
         }
         case 0x02: {
+            r_op->eob = true;
             return insn_conditional(r_op, "j", 15, BIT_RANGE(insn, 0, 1), (uint32_t)(r_op->addr & 0xFC000000) | (BIT_RANGE(insn, 1, 24) << 1));
         }
         case 0x03: {
@@ -311,6 +317,7 @@ static bool disasm32(RAnalOp *r_op, uint32_t insn) {
             bool link = BIT_RANGE(insn, 0, 1);
             int32_t disp = sign_extend(((BIT_RANGE(insn, 15, 10) << 9) | BIT_RANGE(insn, 1, 9)) << 1, 20);
             uint32_t target = r_op->addr + disp;
+            r_op->eob = true;
 
             return insn_conditional(r_op, "b", cond, link, target);
         }
@@ -390,9 +397,16 @@ static bool disasm16(RAnalOp *r_op, uint16_t insn) {
                 case 0x1: OP_RR(I16("mlfh"), rD, rA + 16);
                 case 0x2: OP_RR(I16("mhfl"), rD + 16, rA);
                 case 0x3: OP_RR(I16("mv"), rD, rA);
-                case 0x4: OP_R(IBL16("br", rD, false), rA);
+                case 0x4: {
+                    r_op->type = rD == 3 ? R_ANAL_OP_TYPE_RET : R_ANAL_OP_TYPE_RJMP;
+                    OP_R(IBL16("br", rD, false), rA);
+                    r_op->eob = true;
+                }
                 case 0x5: OP_R(IBL16("t", rD, false), rA);
-                case 0xC: OP_R(IBL16("br", rD, true), rA);
+                case 0xC: {
+                    OP_R(IBL16("br", rD, true), rA);
+                    r_op->eob = true;
+                }
                 default: OP_INVALID();
             }
         }
@@ -438,10 +452,14 @@ static bool disasm16(RAnalOp *r_op, uint16_t insn) {
                 case 0xF: OP_RM(I16("sb"), rD, rA);
             }
         }
-        case 0x3: OP_W(IL16("j", BIT_RANGE(insn, 0, 1)),
-                       (uint32_t)(r_op->addr & 0xFFFFF000) | (BIT_RANGE(insn, 1, 11) << 1));
-        case 0x4: OP_W(IBL16("b", BIT_RANGE(insn, 8, 4), false),
-                       (uint32_t)r_op->addr + (sign_extend(BIT_RANGE(insn, 0, 8), 8) << 1));
+        case 0x3: {
+            OP_W(IL16("j", BIT_RANGE(insn, 0, 1)), (uint32_t)(r_op->addr & 0xFFFFF000) | (BIT_RANGE(insn, 1, 11) << 1));
+            r_op->eob = true;
+        }
+        case 0x4: {
+            OP_W(IBL16("b", BIT_RANGE(insn, 8, 4), false), (uint32_t) r_op->addr + (sign_extend(BIT_RANGE(insn, 0, 8), 8) << 1));
+            r_op->eob = true;
+        }
         case 0x5: OP_RD(I16("ldiu"), BIT_RANGE(insn, 8, 4), BIT_RANGE(insn, 0, 8));
         case 0x6: {
             uint32_t rD = BIT_RANGE(insn, 8, 4);
