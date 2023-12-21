@@ -86,6 +86,7 @@ static char *regs(RArchSession *as) {
 #define OP_RD(op, reg1, immd) FORMAT_OP(op, "%s, %d", REGISTERS[reg1], immd)
 #define OP_RRD(op, reg1, reg2, immd) FORMAT_OP(op, "%s, %s, %d", REGISTERS[reg1], REGISTERS[reg2], immd)
 #define OP_W(op, immx32) FORMAT_OP(op, "0x%08x", immx32)
+#define OP_RW(op, reg1, immx32) FORMAT_OP(op, "%s, 0x%08x", REGISTERS[reg1], immx32)
 #define OP_RH(op, reg1, immx16) FORMAT_OP(op, "%s, 0x%04x", REGISTERS[reg1], immx16)
 #define OP_RRH(op, reg1, reg2, immx16) FORMAT_OP(op, "%s, %s, 0x%04x", REGISTERS[reg1], REGISTERS[reg2], immx16)
 #define OP_RM(op, reg1, mem) FORMAT_OP(op, "%s, [%s]", REGISTERS[reg1], REGISTERS[mem])
@@ -323,15 +324,15 @@ static bool disasm32(RAnalOp *r_op, uint32_t insn) {
         }
         case 0x05: {
             bool cu = BIT_RANGE(insn, 0, 1);
-            uint16_t imm16 = BIT_RANGE(insn, 1, 16);
+            uint32_t imm16 = BIT_RANGE(insn, 1, 16) << 16;
             uint32_t rD = BIT_RANGE(insn, 20, 5);
 
             switch (BIT_RANGE(insn, 17, 3)) {
-                case 0x00: OP_RD(IC("addis", cu), rD, sign_extend(imm16, 16));
-                case 0x02: OP_RD(IC("cmpis", cu), rD, sign_extend(imm16, 16));
-                case 0x04: OP_RH(IC("andis", cu), rD, imm16);
-                case 0x05: OP_RH(IC("oris", cu), rD, imm16);
-                case 0x06: OP_RH(IC("ldis", cu), rD, imm16);
+                case 0x00: OP_RD(IC("addis", cu), rD, imm16);
+                case 0x02: OP_RD(IC("cmpis", cu), rD, imm16);
+                case 0x04: OP_RW(IC("andis", cu), rD, imm16);
+                case 0x05: OP_RW(IC("oris", cu), rD, imm16);
+                case 0x06: OP_RW(IC("ldis", cu), rD, imm16);
                 default: OP_INVALID();
             }
         }
